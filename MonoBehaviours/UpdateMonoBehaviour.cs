@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using TaskAutomation.Helpers;
 using UnityEngine;
+using static EFT.Profile;
 
 #nullable enable
 
@@ -298,6 +299,10 @@ namespace TaskAutomation.MonoBehaviours
                 return false;
             if (this.abstractQuestController.Profile.TryGetTraderInfo(traderId, out var traderInfo) == false)
                 return false;
+            if (traderId == TraderInfo.LIGHT_KEEPER_TRADER_ID)
+                return false; //TODO make optional to accept in menu.
+            if (traderId == TraderInfo.BTR_TRADER_ID)
+                return false; //TODO make optional to accept in menu.
             return traderInfo.Unlocked;
         }
 
