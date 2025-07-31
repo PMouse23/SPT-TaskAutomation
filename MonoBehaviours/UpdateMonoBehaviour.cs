@@ -4,6 +4,7 @@ using EFT.Quests;
 using HarmonyLib;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using TaskAutomation.Helpers;
@@ -61,25 +62,34 @@ namespace TaskAutomation.MonoBehaviours
                 {
                     if (Globals.Debug)
                         LogHelper.LogInfo($"Started {quest.rawQuestClass.Name}");
-                    this.handleQuest(abstractQuestController, quest);
+                    try
+                    {
+                        this.handleQuest(abstractQuestController, quest);
+                    }
+                    catch (Exception exception)
+                    {
+                        LogHelper.LogExceptionToConsole(exception);
+                    }
                     yield return new WaitForSeconds(0.5f);
+                    quests = this.abstractQuestController.Quests;
                 }
                 //FinishQuests
-                quests = this.abstractQuestController.Quests;
                 if (Globals.AutoCompleteQuests)
                 {
-                    while (quests.Any(this.isReadyToFinish))
+                    List<string> questsReadyToFinish = this.getIdsReadyToComplete();
+                    foreach (string id in questsReadyToFinish)
                     {
-                        QuestClass questToComplete = quests.FirstOrDefault(this.isReadyToFinish);
                         try
                         {
+                            QuestClass? questToComplete = this.getQuestById(id);
+                            if (questToComplete == null)
+                                continue;
                             if (this.abstractQuestController.IsQuestForCurrentProfile(questToComplete) == false)
                                 continue;
                             if (Globals.Debug)
                                 LogHelper.LogInfo($"AvailableForFinish {questToComplete.rawQuestClass.Name}");
                             this.abstractQuestController.FinishQuest(questToComplete, true);
                             LogHelper.LogInfoWithNotification($"Completed: {questToComplete.rawQuestClass.Name}");
-                            quests = this.abstractQuestController.Quests;
                         }
                         catch (Exception exception)
                         {
@@ -87,23 +97,26 @@ namespace TaskAutomation.MonoBehaviours
                         }
                         yield return new WaitForSeconds(0.5f);
                     }
+                    quests = this.abstractQuestController.Quests;
                 }
                 //StartQuests
                 quests = this.abstractQuestController.Quests;
                 if (Globals.AutoAcceptQuests)
                 {
-                    while (quests.Any(this.isReadyToStart))
+                    List<string> questsReadyToStart = this.getIdsReadyToStart();
+                    foreach (string id in questsReadyToStart)
                     {
-                        QuestClass questToStart = quests.FirstOrDefault(this.isReadyToStart);
                         try
                         {
+                            QuestClass? questToStart = this.getQuestById(id);
+                            if (questToStart == null)
+                                continue;
                             if (this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
                                 continue;
                             if (Globals.Debug)
                                 LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}");
                             this.abstractQuestController.AcceptQuest(questToStart, true);
                             LogHelper.LogInfoWithNotification($"Accepted: {questToStart.rawQuestClass.Name}");
-                            quests = this.abstractQuestController.Quests;
                         }
                         catch (Exception exception)
                         {
@@ -111,13 +124,12 @@ namespace TaskAutomation.MonoBehaviours
                         }
                         yield return new WaitForSeconds(0.5f);
                     }
+                    quests = this.abstractQuestController.Quests;
                 }
                 //FailedQuests
-                quests = this.abstractQuestController.Quests;
-
-                while (quests.Any(this.isMarkedAsFailed))
+                QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
+                if (failedQuest != null)
                 {
-                    QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
                     try
                     {
                         if (this.abstractQuestController.IsQuestForCurrentProfile(failedQuest) == false)
@@ -125,7 +137,6 @@ namespace TaskAutomation.MonoBehaviours
                         if (Globals.Debug)
                             LogHelper.LogInfo($"FailConditional {failedQuest.rawQuestClass.Name}");
                         this.abstractQuestController.FailConditional(failedQuest);
-                        quests = this.abstractQuestController.Quests;
                     }
                     catch (Exception exception)
                     {
@@ -134,6 +145,32 @@ namespace TaskAutomation.MonoBehaviours
                     yield return new WaitForSeconds(0.5f);
                 }
             }
+        }
+
+        private List<string> getIdsReadyToComplete()
+        {
+            if (this.abstractQuestController == null)
+                return [];
+            var quests = this.abstractQuestController.Quests;
+            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isReadyToFinish);
+            return questsReadyToFinish.Select(quest => quest.Id).ToList();
+        }
+
+        private List<string> getIdsReadyToStart()
+        {
+            if (this.abstractQuestController == null)
+                return [];
+            var quests = this.abstractQuestController.Quests;
+            IEnumerable<QuestClass> questsReadyToStart = quests.Where(this.isReadyToStart);
+            return questsReadyToStart.Select(quest => quest.Id).ToList();
+        }
+
+        private QuestClass? getQuestById(string id)
+        {
+            if (this.abstractQuestController == null)
+                return null;
+            var quests = this.abstractQuestController.Quests;
+            return quests.FirstOrDefault(quest => quest.Id == id);
         }
 
         /// <summary>
@@ -169,6 +206,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (result == null || result.Length == 0)
                             continue;
                         abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
+                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
                     }
                 }
                 else if (condition is ConditionWeaponAssembly conditionWeaponAssembly)
