@@ -4,6 +4,7 @@ using EFT.Quests;
 using HarmonyLib;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using TaskAutomation.Helpers;
@@ -63,7 +64,7 @@ namespace TaskAutomation.MonoBehaviours
                         LogHelper.LogInfo($"Started {quest.rawQuestClass.Name}");
                     try
                     {
-                    this.handleQuest(abstractQuestController, quest);
+                        this.handleQuest(abstractQuestController, quest);
                     }
                     catch (Exception exception)
                     {
@@ -73,13 +74,11 @@ namespace TaskAutomation.MonoBehaviours
                     quests = this.abstractQuestController.Quests;
                 }
                 //FinishQuests
-                quests = this.abstractQuestController.Quests;
                 if (Globals.AutoCompleteQuests)
                 {
                     List<string> questsReadyToFinish = this.getIdsReadyToComplete();
                     foreach (string id in questsReadyToFinish)
                     {
-                        QuestClass questToComplete = quests.FirstOrDefault(this.isReadyToFinish);
                         try
                         {
                             QuestClass? questToComplete = this.getQuestById(id);
@@ -91,7 +90,6 @@ namespace TaskAutomation.MonoBehaviours
                                 LogHelper.LogInfo($"AvailableForFinish {questToComplete.rawQuestClass.Name}");
                             this.abstractQuestController.FinishQuest(questToComplete, true);
                             LogHelper.LogInfoWithNotification($"Completed: {questToComplete.rawQuestClass.Name}");
-                            quests = this.abstractQuestController.Quests;
                         }
                         catch (Exception exception)
                         {
@@ -108,7 +106,6 @@ namespace TaskAutomation.MonoBehaviours
                     List<string> questsReadyToStart = this.getIdsReadyToStart();
                     foreach (string id in questsReadyToStart)
                     {
-                        QuestClass questToStart = quests.FirstOrDefault(this.isReadyToStart);
                         try
                         {
                             QuestClass? questToStart = this.getQuestById(id);
@@ -120,7 +117,6 @@ namespace TaskAutomation.MonoBehaviours
                                 LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}");
                             this.abstractQuestController.AcceptQuest(questToStart, true);
                             LogHelper.LogInfoWithNotification($"Accepted: {questToStart.rawQuestClass.Name}");
-                            quests = this.abstractQuestController.Quests;
                         }
                         catch (Exception exception)
                         {
@@ -134,7 +130,6 @@ namespace TaskAutomation.MonoBehaviours
                 QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
                 if (failedQuest != null)
                 {
-                    QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
                     try
                     {
                         if (this.abstractQuestController.IsQuestForCurrentProfile(failedQuest) == false)
@@ -142,7 +137,6 @@ namespace TaskAutomation.MonoBehaviours
                         if (Globals.Debug)
                             LogHelper.LogInfo($"FailConditional {failedQuest.rawQuestClass.Name}");
                         this.abstractQuestController.FailConditional(failedQuest);
-                        quests = this.abstractQuestController.Quests;
                     }
                     catch (Exception exception)
                     {
@@ -212,6 +206,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (result == null || result.Length == 0)
                             continue;
                         abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
+                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
                     }
                 }
                 else if (condition is ConditionWeaponAssembly conditionWeaponAssembly)
