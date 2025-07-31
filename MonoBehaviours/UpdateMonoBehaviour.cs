@@ -283,12 +283,22 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool isReadyToStart(QuestClass quest)
         {
-            return quest.QuestStatus == EQuestStatus.AvailableForStart;
+            return quest.QuestStatus == EQuestStatus.AvailableForStart
+                && this.isUnlockedTrader(quest.rawQuestClass.TraderId);
         }
 
         private bool isStarted(QuestClass quest)
         {
             return quest.QuestStatus == EQuestStatus.Started;
+        }
+
+        private bool isUnlockedTrader(string traderId)
+        {
+            if (this.abstractQuestController == null)
+                return false;
+            if (this.abstractQuestController.Profile.TryGetTraderInfo(traderId, out var traderInfo) == false)
+                return false;
+            return traderInfo.Unlocked;
         }
 
         private void Start()

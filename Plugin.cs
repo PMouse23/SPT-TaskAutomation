@@ -8,7 +8,7 @@ using TaskAutomation.Patches.Screens;
 
 namespace TaskAutomation
 {
-    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.2.0")]
+    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.3.0")]
     public class Plugin : BaseUnityPlugin
     {
         private ConfigEntry<bool> autoAcceptQuests;
