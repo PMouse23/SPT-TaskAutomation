@@ -8,6 +8,7 @@ internal static class Globals
     public static bool AutoCompleteQuests = true;
     public static bool AutoHandoverFindInRaid = true;
     public static bool AutoHandoverObtain = true;
+    public static bool AutoRestartFailedQuests = true;
     public static bool Debug = false;
     public static bool InRaid = false;
     public static bool SkipElimination = false;

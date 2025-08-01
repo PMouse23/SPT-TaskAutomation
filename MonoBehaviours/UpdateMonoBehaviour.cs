@@ -157,6 +157,15 @@ namespace TaskAutomation.MonoBehaviours
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
 
+        private List<string> getIdsReadyToRestart()
+        {
+            if (this.abstractQuestController == null)
+                return [];
+            var quests = this.abstractQuestController.Quests;
+            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isMarkedAsFailRestartable);
+            return questsReadyToFinish.Select(quest => quest.Id).ToList();
+        }
+
         private List<string> getIdsReadyToStart()
         {
             if (this.abstractQuestController == null)
@@ -277,6 +286,12 @@ namespace TaskAutomation.MonoBehaviours
             return quest.QuestStatus == EQuestStatus.MarkedAsFailed;
         }
 
+        private bool isMarkedAsFailRestartable(QuestClass quest)
+        {
+            return Globals.AutoRestartFailedQuests
+                && quest.QuestStatus == EQuestStatus.FailRestartable;
+        }
+
         private bool isReadyToFinish(QuestClass quest)
         {
             return quest.QuestStatus == EQuestStatus.AvailableForFinish;
@@ -284,7 +299,8 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool isReadyToStart(QuestClass quest)
         {
-            return quest.QuestStatus == EQuestStatus.AvailableForStart
+            return (quest.QuestStatus == EQuestStatus.AvailableForStart
+                || this.isMarkedAsFailRestartable(quest))
                 && this.isUnlockedTrader(quest.rawQuestClass.TraderId);
         }
 

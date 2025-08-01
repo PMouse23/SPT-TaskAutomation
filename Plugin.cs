@@ -17,6 +17,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> autoCompleteQuests;
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
+        private ConfigEntry<bool> autoRestartFailedQuests;
         private ConfigEntry<bool> debug;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
@@ -83,6 +84,9 @@ namespace TaskAutomation
             this.autoHandoverObtain = this.Config.Bind("Automation", "AutoFindAndObtain", true, "Automatically handover find and obtain items.");
             this.autoHandoverObtain.SettingChanged += this.global_SettingChanged;
 
+            this.autoRestartFailedQuests = this.Config.Bind("Automation", "AutoRestartFailedQuests", true, "Automatically restart failed quests.");
+            this.autoRestartFailedQuests.SettingChanged += this.global_SettingChanged;
+
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
             this.skipFindInRaid.SettingChanged += this.global_SettingChanged;
 
@@ -129,6 +133,7 @@ namespace TaskAutomation
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
+            Globals.AutoRestartFailedQuests = this.autoRestartFailedQuests.Value;
             Globals.SkipElimination = this.skipElimination.Value;
             Globals.SkipFindInRaid = this.skipFindInRaid.Value;
             Globals.SkipFindAndObtain = this.skipFindAndObtain.Value;
