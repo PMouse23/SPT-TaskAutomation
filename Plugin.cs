@@ -11,6 +11,8 @@ namespace TaskAutomation
     [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.3.0")]
     public class Plugin : BaseUnityPlugin
     {
+        private ConfigEntry<bool> acceptBTROutOfRaid;
+        private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
         private ConfigEntry<bool> autoAcceptQuests;
         private ConfigEntry<bool> autoCompleteQuests;
         private ConfigEntry<bool> autoHandoverFindInRaid;
@@ -66,6 +68,12 @@ namespace TaskAutomation
             this.autoAcceptQuests = this.Config.Bind("Automation", "AutoAcceptQuests", true, "Automatically accept quests.");
             this.autoAcceptQuests.SettingChanged += this.global_SettingChanged;
 
+            this.acceptBTROutOfRaid = this.Config.Bind("Automation", "AcceptBTROutOfRaid", false, "Automatically accept BTR quests out of raid.");
+            this.acceptBTROutOfRaid.SettingChanged += this.global_SettingChanged;
+
+            this.acceptLightKeeperOutOfRaid = this.Config.Bind("Automation", "AcceptLightKeeperOutOfRaid", false, "Automatically accept Light Keeper quests out of raid.");
+            this.acceptLightKeeperOutOfRaid.SettingChanged += this.global_SettingChanged;
+
             this.autoCompleteQuests = this.Config.Bind("Automation", "AutoCompleteQuests", true, "Automatically complete quests.");
             this.autoCompleteQuests.SettingChanged += this.global_SettingChanged;
 
@@ -115,6 +123,8 @@ namespace TaskAutomation
         private void setGlobalSettings()
         {
             Globals.Debug = this.debug.Value;
+            Globals.AcceptBTROutOfRaid = this.acceptBTROutOfRaid.Value;
+            Globals.AcceptLightKeeperOutOfRaid = this.acceptLightKeeperOutOfRaid.Value;
             Globals.AutoAcceptQuests = this.autoAcceptQuests.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;

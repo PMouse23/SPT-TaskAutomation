@@ -299,10 +299,12 @@ namespace TaskAutomation.MonoBehaviours
                 return false;
             if (this.abstractQuestController.Profile.TryGetTraderInfo(traderId, out var traderInfo) == false)
                 return false;
-            if (traderId == TraderInfo.LIGHT_KEEPER_TRADER_ID)
-                return false; //TODO make optional to accept in menu.
-            if (traderId == TraderInfo.BTR_TRADER_ID)
-                return false; //TODO make optional to accept in menu.
+            bool shouldBlockLightKeeper = Globals.AcceptLightKeeperOutOfRaid == false && traderId == TraderInfo.LIGHT_KEEPER_TRADER_ID;
+            if (shouldBlockLightKeeper)
+                return false;
+            bool shouldBlockBTR = Globals.AcceptBTROutOfRaid == false && traderId == TraderInfo.BTR_TRADER_ID;
+            if (shouldBlockBTR)
+                return false;
             return traderInfo.Unlocked;
         }
 
