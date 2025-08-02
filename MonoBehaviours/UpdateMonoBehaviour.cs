@@ -212,9 +212,18 @@ namespace TaskAutomation.MonoBehaviours
                     else if ((Globals.AutoHandoverFindInRaid && conditionHandoverItem.onlyFoundInRaid == true)
                           || (Globals.AutoHandoverObtain && conditionHandoverItem.onlyFoundInRaid == false))
                     {
+                        ConditionProgressChecker conditionProgressChecker = quest.ProgressCheckers[condition];
+                        double handoverValue = 0;
+                        double currentValue = conditionProgressChecker.CurrentValue;
+                        double expectedValue = condition.value;
+                        if (currentValue < expectedValue)
+                            handoverValue = expectedValue - currentValue;
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
+                        result = result.Take((int)handoverValue).ToArray();
+                        if (Globals.Debug)
+                            LogHelper.LogInfo($"HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} {quest.rawQuestClass.Name}");
                         abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
                         LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
                     }
