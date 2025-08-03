@@ -88,7 +88,7 @@ namespace TaskAutomation
             this.autoRestartFailedQuests = this.Config.Bind("Automation", "AutoRestartFailedQuests", true, "Automatically restart failed quests.");
             this.autoRestartFailedQuests.SettingChanged += this.global_SettingChanged;
 
-            this.autoAcceptQuestsThatCanFail = this.Config.Bind("Automation", "autoAcceptQuestsThatCanFail", false, "Automatically accept quests that are that can fail.");
+            this.autoAcceptQuestsThatCanFail = this.Config.Bind("Automation", "AutoAcceptQuestsThatCanFail", false, "Automatically accept quests that are that can fail.");
             this.autoAcceptQuestsThatCanFail.SettingChanged += this.global_SettingChanged;
 
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
