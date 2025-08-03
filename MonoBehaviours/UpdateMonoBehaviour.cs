@@ -196,7 +196,7 @@ namespace TaskAutomation.MonoBehaviours
             {
                 if (Globals.Debug)
                     LogHelper.LogInfo($" - {condition.GetType()} {condition.FormattedDescription} IsNecessary:{condition.IsNecessary} Done:{quest.IsConditionDone(condition)}");
-                if (condition.IsNecessary == false || quest.IsConditionDone(condition))
+                if (quest.IsConditionDone(condition))
                     continue;
 
                 if (condition is ConditionHandoverItem conditionHandoverItem)
@@ -223,7 +223,7 @@ namespace TaskAutomation.MonoBehaviours
                             continue;
                         result = result.Take((int)handoverValue).ToArray();
                         if (Globals.Debug)
-                            LogHelper.LogInfo($"HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} {quest.rawQuestClass.Name}");
+                            LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
                         abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
                         LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
                     }
