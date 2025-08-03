@@ -5,6 +5,7 @@ internal static class Globals
     public static bool AcceptBTROutOfRaid = false;
     public static bool AcceptLightKeeperOutOfRaid = false;
     public static bool AutoAcceptQuests = true;
+    public static bool AutoAcceptQuestsThatCanFail = false;
     public static bool AutoCompleteQuests = true;
     public static bool AutoHandoverFindInRaid = true;
     public static bool AutoHandoverObtain = true;

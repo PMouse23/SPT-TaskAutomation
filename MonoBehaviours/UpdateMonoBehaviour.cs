@@ -2,6 +2,7 @@
 using EFT.InventoryLogic;
 using EFT.Quests;
 using HarmonyLib;
+using SPT.Common.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -115,7 +116,7 @@ namespace TaskAutomation.MonoBehaviours
                             if (this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
                                 continue;
                             if (Globals.Debug)
-                                LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}");
+                                LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}, json={Json.Serialize<RawQuestClass>(questToStart.rawQuestClass)}");
                             this.abstractQuestController.AcceptQuest(questToStart, true);
                             LogHelper.LogInfoWithNotification($"Accepted: {questToStart.rawQuestClass.Name}");
                         }
@@ -310,6 +311,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             return (quest.QuestStatus == EQuestStatus.AvailableForStart
                 || this.isMarkedAsFailRestartable(quest))
+                && this.shouldAcceptQuestThatCanFail(quest)
                 && this.isUnlockedTrader(quest.rawQuestClass.TraderId);
         }
 
@@ -331,6 +333,19 @@ namespace TaskAutomation.MonoBehaviours
             if (shouldBlockBTR)
                 return false;
             return traderInfo.Unlocked;
+        }
+
+        private bool shouldAcceptQuestThatCanFail(QuestClass quest)
+        {
+            if (quest.rawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
+                return true;
+            var failconditions = quest.rawQuestClass.Conditions[EQuestStatus.Fail];
+            bool canFail = failconditions.IEnumerable_0.Count() > 0;
+            if (canFail == false)
+                return true;
+            else if (Globals.AutoAcceptQuestsThatCanFail)
+                return true;
+            return false;
         }
 
         private void Start()

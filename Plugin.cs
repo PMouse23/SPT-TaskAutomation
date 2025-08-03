@@ -14,6 +14,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> acceptBTROutOfRaid;
         private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
         private ConfigEntry<bool> autoAcceptQuests;
+        private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
         private ConfigEntry<bool> autoCompleteQuests;
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
@@ -87,6 +88,9 @@ namespace TaskAutomation
             this.autoRestartFailedQuests = this.Config.Bind("Automation", "AutoRestartFailedQuests", true, "Automatically restart failed quests.");
             this.autoRestartFailedQuests.SettingChanged += this.global_SettingChanged;
 
+            this.autoAcceptQuestsThatCanFail = this.Config.Bind("Automation", "autoAcceptQuestsThatCanFail", false, "Automatically accept quests that are that can fail.");
+            this.autoAcceptQuestsThatCanFail.SettingChanged += this.global_SettingChanged;
+
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
             this.skipFindInRaid.SettingChanged += this.global_SettingChanged;
 
@@ -130,6 +134,7 @@ namespace TaskAutomation
             Globals.AcceptBTROutOfRaid = this.acceptBTROutOfRaid.Value;
             Globals.AcceptLightKeeperOutOfRaid = this.acceptLightKeeperOutOfRaid.Value;
             Globals.AutoAcceptQuests = this.autoAcceptQuests.Value;
+            Globals.AutoAcceptQuestsThatCanFail = this.autoAcceptQuestsThatCanFail.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
