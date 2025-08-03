@@ -1,7 +1,9 @@
-﻿using EFT;
+﻿using Comfort.Common;
+using EFT;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using TaskAutomation.MonoBehaviours;
 
 namespace TaskAutomation.Patches.Raid
 {
@@ -16,6 +18,7 @@ namespace TaskAutomation.Patches.Raid
         private static void PatchPostFix()
         {
             Globals.InRaid = true;
+            Singleton<UpdateMonoBehaviour>.Instance.UnsetAbstractQuestController();
         }
     }
 }

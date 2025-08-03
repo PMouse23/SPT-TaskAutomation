@@ -33,6 +33,11 @@ namespace TaskAutomation.MonoBehaviours
             this.itemsProviderMethod = itemsProviderMethod;
         }
 
+        public void UnsetAbstractQuestController()
+        {
+            this.abstractQuestController = null;
+        }
+
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
         {
             MongoID id = condition.id;
