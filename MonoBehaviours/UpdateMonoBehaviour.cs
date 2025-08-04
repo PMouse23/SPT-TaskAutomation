@@ -24,6 +24,8 @@ namespace TaskAutomation.MonoBehaviours
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
+            if (this.abstractQuestController == null)
+                this.StartCoroutine(this.coroutine());
             this.abstractQuestController = abstractQuestController;
         }
 
@@ -36,6 +38,7 @@ namespace TaskAutomation.MonoBehaviours
         public void UnsetAbstractQuestController()
         {
             this.abstractQuestController = null;
+            this.StopAllCoroutines();
         }
 
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
@@ -351,11 +354,6 @@ namespace TaskAutomation.MonoBehaviours
             else if (Globals.AutoAcceptQuestsThatCanFail)
                 return true;
             return false;
-        }
-
-        private void Start()
-        {
-            this.StartCoroutine(this.coroutine());
         }
     }
 }
