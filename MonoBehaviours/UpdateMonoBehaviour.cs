@@ -184,6 +184,11 @@ namespace TaskAutomation.MonoBehaviours
             return questsReadyToStart.Select(quest => quest.Id).ToList();
         }
 
+        private Item[] getItemsAllowedToHandover(double handoverValue, Item[] result)
+        {
+            return result.Where(this.isNotFilledCompoundItem).Take((int)handoverValue).ToArray();
+        }
+
         private QuestClass? getQuestById(string id)
         {
             if (this.abstractQuestController == null)
@@ -230,7 +235,9 @@ namespace TaskAutomation.MonoBehaviours
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
-                        result = result.Take((int)handoverValue).ToArray();
+                        result = this.getItemsAllowedToHandover(handoverValue, result);
+                        if (result.Length == 0)
+                            continue;
                         if (Globals.Debug)
                             LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
                         abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
@@ -299,6 +306,11 @@ namespace TaskAutomation.MonoBehaviours
             }
         }
 
+        private bool isFilledCompoundItem(CompoundItem compoundItem)
+        {
+            return compoundItem.Containers.Any(c => c.Items.Any());
+        }
+
         private bool isMarkedAsFailed(QuestClass quest)
         {
             return quest.QuestStatus == EQuestStatus.MarkedAsFailed;
@@ -308,6 +320,17 @@ namespace TaskAutomation.MonoBehaviours
         {
             return Globals.AutoRestartFailedQuests
                 && quest.QuestStatus == EQuestStatus.FailRestartable;
+        }
+
+        private bool isNotFilledCompoundItem(Item item)
+        {
+            if (Globals.Debug)
+                LogHelper.LogInfo($"itemtype: {item.GetType()}");
+            if (item.IsContainer
+             && item is CompoundItem container
+             && this.isFilledCompoundItem(container))
+                return false;
+            return true;
         }
 
         private bool isReadyToFinish(QuestClass quest)
