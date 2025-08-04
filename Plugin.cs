@@ -19,6 +19,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
         private ConfigEntry<bool> autoRestartFailedQuests;
+        private ConfigEntry<int> blockTurnInArmorPlateLevelHigherThan;
         private ConfigEntry<bool> debug;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
@@ -91,6 +92,9 @@ namespace TaskAutomation
             this.autoAcceptQuestsThatCanFail = this.Config.Bind("Automation", "AutoAcceptQuestsThatCanFail", false, "Automatically accept quests that are that can fail.");
             this.autoAcceptQuestsThatCanFail.SettingChanged += this.global_SettingChanged;
 
+            this.blockTurnInArmorPlateLevelHigherThan = this.Config.Bind("Automation", "BlockTurnInArmorPlateLevelHigherThan", 3, new ConfigDescription("Block the automatic handover of items that have plates higher then level.", new AcceptableValueRange<int>(0, 6)));
+            this.blockTurnInArmorPlateLevelHigherThan.SettingChanged += this.global_SettingChanged;
+
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
             this.skipFindInRaid.SettingChanged += this.global_SettingChanged;
 
@@ -139,6 +143,7 @@ namespace TaskAutomation
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
             Globals.AutoRestartFailedQuests = this.autoRestartFailedQuests.Value;
+            Globals.BlockTurnInArmorPlateLevelHigherThan = this.blockTurnInArmorPlateLevelHigherThan.Value;
             Globals.SkipElimination = this.skipElimination.Value;
             Globals.SkipFindInRaid = this.skipFindInRaid.Value;
             Globals.SkipFindAndObtain = this.skipFindAndObtain.Value;

@@ -186,7 +186,7 @@ namespace TaskAutomation.MonoBehaviours
 
         private Item[] getItemsAllowedToHandover(double handoverValue, Item[] result)
         {
-            return result.Where(this.isNotFilledCompoundItem).Take((int)handoverValue).ToArray();
+            return result.Where(this.isAllowToHandover).Take((int)handoverValue).ToArray();
         }
 
         private QuestClass? getQuestById(string id)
@@ -306,9 +306,29 @@ namespace TaskAutomation.MonoBehaviours
             }
         }
 
+        private bool isAllowToHandover(Item item)
+        {
+            return this.isNotFilledCompoundItem(item)
+                && this.isFilledWithPlates(item) == false;
+        }
+
         private bool isFilledCompoundItem(CompoundItem compoundItem)
         {
             return compoundItem.Containers.Any(c => c.Items.Any());
+        }
+
+        private bool isFilledWithPlates(Item item)
+        {
+            if (item.Components.Any(this.isFilledWithPlates))
+                return true;
+            return false;
+        }
+
+        private bool isFilledWithPlates(IItemComponent itemComponent)
+        {
+            if (itemComponent is not ArmorHolderComponent armorHolderComponent)
+                return false;
+            return armorHolderComponent.MoveAbleArmorSlots.Any(slot => slot.ContainedItem is ArmorPlateItemClass armorPlateItemClass && armorPlateItemClass.Armor.ArmorClass > Globals.BlockTurnInArmorPlateLevelHigherThan);
         }
 
         private bool isMarkedAsFailed(QuestClass quest)
