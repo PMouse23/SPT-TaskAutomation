@@ -201,10 +201,10 @@ namespace TaskAutomation.MonoBehaviours
         /// Handle quest for automation
         /// </summary>
         /// <returns>True if the sequence should run again.</returns>
-        private void handleQuest(AbstractQuestControllerClass abstractQuestController, QuestClass quest)
+        private bool handleQuest(AbstractQuestControllerClass abstractQuestController, QuestClass quest)
         {
             if (quest.QuestStatus != EQuestStatus.Started)
-                return;
+                return false;
 
             foreach (Condition condition in quest.NecessaryConditions)
             {
@@ -242,6 +242,7 @@ namespace TaskAutomation.MonoBehaviours
                             LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
                         abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
                         LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+                        return true;
                     }
                 }
                 else if (condition is ConditionWeaponAssembly conditionWeaponAssembly)
@@ -304,6 +305,7 @@ namespace TaskAutomation.MonoBehaviours
                 else if (Globals.Debug)
                     LogHelper.LogInfo($"ConditionType: {condition.GetType()} not handled.");
             }
+            return false;
         }
 
         private bool isAllowToHandover(Item item)
