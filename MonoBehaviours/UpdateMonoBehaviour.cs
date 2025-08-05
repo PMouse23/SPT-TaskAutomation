@@ -312,7 +312,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             return this.isInEquipmentSlot(item) == false
                 && this.isBlockedWeapon(item) == false
-                && this.isNotFilledCompoundItem(item)
+                && this.isFilledCompoundItem(item) == false
                 && this.isFilledWithPlates(item) == false;
         }
 
@@ -362,6 +362,17 @@ namespace TaskAutomation.MonoBehaviours
             return compoundItem.Containers.Any(c => c.Items.Any());
         }
 
+        private bool isFilledCompoundItem(Item item)
+        {
+            if (Globals.Debug)
+                LogHelper.LogInfo($"itemtype: {item.GetType()}");
+            if (item.IsContainer
+             && item is CompoundItem container
+             && this.isFilledCompoundItem(container))
+                return true;
+            return false;
+        }
+
         private bool isFilledWithPlates(Item item)
         {
             if (item.Components.Any(this.isFilledWithPlates))
@@ -392,17 +403,6 @@ namespace TaskAutomation.MonoBehaviours
         {
             return Globals.AutoRestartFailedQuests
                 && quest.QuestStatus == EQuestStatus.FailRestartable;
-        }
-
-        private bool isNotFilledCompoundItem(Item item)
-        {
-            if (Globals.Debug)
-                LogHelper.LogInfo($"itemtype: {item.GetType()}");
-            if (item.IsContainer
-             && item is CompoundItem container
-             && this.isFilledCompoundItem(container))
-                return false;
-            return true;
         }
 
         private bool isReadyToFinish(QuestClass quest)
