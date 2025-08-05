@@ -311,8 +311,18 @@ namespace TaskAutomation.MonoBehaviours
         private bool isAllowToHandover(Item item)
         {
             return this.isInEquipmentSlot(item) == false
+                && this.isBlockedWeapon(item) == false
                 && this.isNotFilledCompoundItem(item)
                 && this.isFilledWithPlates(item) == false;
+        }
+
+        private bool isBlockedWeapon(Item item)
+        {
+            if (Globals.BlockTurnInWeapons == false)
+                return false;
+            else if (item is Weapon)
+                return true;
+            return false;
         }
 
         private bool isEquipmentSlot(ItemAddress itemAddress)
@@ -320,7 +330,7 @@ namespace TaskAutomation.MonoBehaviours
             if (itemAddress == null)
                 return false;
             if (Globals.Debug)
-                LogHelper.LogInfoWithNotification($"ItemAddress {itemAddress.Container.ID} {itemAddress.GetType()}");
+                LogHelper.LogInfo($"ItemAddress {itemAddress.Container.ID} {itemAddress.GetType()}");
             string containerId = itemAddress.Container.ID.ToLower();
             if (containerId == null)
                 return false;
