@@ -1,23 +1,20 @@
 ﻿using Comfort.Common;
 using EFT;
-using EFT.InventoryLogic;
-using EFT.Quests;
 using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using TaskAutomation.Helpers;
 using TaskAutomation.MonoBehaviours;
-using static RawQuestClass;
 
 namespace TaskAutomation.Patches.Screens
 {
     internal class InventoryScreen_Show : ModulePatch
     {
         private static Type conditionChecker;
+        private static Type dailyTaskType;
         private static Type itemsProvider;
         private static MethodInfo itemsProviderMethod;
 
@@ -33,7 +30,7 @@ namespace TaskAutomation.Patches.Screens
             LogHelper.LogInfo($"{itemsProvider}");
             itemsProviderMethod = itemsProvider.GetMethod("GetItemsForCondition", BindingFlags.Public | BindingFlags.Static);
             LogHelper.LogInfo($"{itemsProviderMethod}");
-
+            dailyTaskType = AccessTools.GetTypesFromAssembly(typeof(RawQuestClass).Assembly).SingleOrDefault(this.isDailyTaskType);
             return AccessTools.FirstMethod(typeof(InventoryScreen), this.IsTargetMethod);
         }
 
@@ -45,8 +42,16 @@ namespace TaskAutomation.Patches.Screens
                 return;
             if (Globals.Debug)
                 LogHelper.LogInfo($"Found abstractQuestController.");
-            Singleton<UpdateMonoBehaviour>.Instance.SetReflection(conditionChecker, itemsProviderMethod);
+            Singleton<UpdateMonoBehaviour>.Instance.SetReflection(conditionChecker, itemsProviderMethod, dailyTaskType);
             Singleton<UpdateMonoBehaviour>.Instance.SetAbstractQuestController(abstractQuestController);
+        }
+
+        private bool isDailyTaskType(Type type)
+        {
+            Type rawQuestType = typeof(RawQuestClass);
+            return type != rawQuestType
+                && type.BaseType == rawQuestType
+                && type.GetProperty("ExpirationTime") != null;
         }
 
         private bool IsTargetMethod(MethodInfo method)
