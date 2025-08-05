@@ -4,6 +4,7 @@ internal static class Globals
 {
     public static bool AcceptBTROutOfRaid = false;
     public static bool AcceptLightKeeperOutOfRaid = false;
+    public static bool AutoAcceptDailyQuests = true;
     public static bool AutoAcceptQuests = true;
     public static bool AutoAcceptQuestsThatCanFail = false;
     public static bool AutoCompleteQuests = true;

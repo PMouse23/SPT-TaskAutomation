@@ -13,6 +13,7 @@ namespace TaskAutomation
     {
         private ConfigEntry<bool> acceptBTROutOfRaid;
         private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
+        private ConfigEntry<bool> autoAcceptDailyQuests;
         private ConfigEntry<bool> autoAcceptQuests;
         private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
         private ConfigEntry<bool> autoCompleteQuests;
@@ -68,6 +69,9 @@ namespace TaskAutomation
         {
             this.debug = this.Config.Bind("General", "Debug", false, "Debug");
             this.debug.SettingChanged += this.global_SettingChanged;
+
+            this.autoAcceptDailyQuests = this.Config.Bind("Automation", "AutoAcceptDailyQuests", true, "Automatically accept daily quests.");
+            this.autoAcceptDailyQuests.SettingChanged += this.global_SettingChanged;
 
             this.autoAcceptQuests = this.Config.Bind("Automation", "AutoAcceptQuests", true, "Automatically accept quests.");
             this.autoAcceptQuests.SettingChanged += this.global_SettingChanged;
@@ -141,6 +145,7 @@ namespace TaskAutomation
             Globals.Debug = this.debug.Value;
             Globals.AcceptBTROutOfRaid = this.acceptBTROutOfRaid.Value;
             Globals.AcceptLightKeeperOutOfRaid = this.acceptLightKeeperOutOfRaid.Value;
+            Globals.AutoAcceptDailyQuests = this.autoAcceptDailyQuests.Value;
             Globals.AutoAcceptQuests = this.autoAcceptQuests.Value;
             Globals.AutoAcceptQuestsThatCanFail = this.autoAcceptQuestsThatCanFail.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;

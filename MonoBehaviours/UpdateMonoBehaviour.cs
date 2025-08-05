@@ -20,6 +20,7 @@ namespace TaskAutomation.MonoBehaviours
     {
         private AbstractQuestControllerClass? abstractQuestController;
         private Type? conditionChecker;
+        private Type? dailyQuestType;
         private MethodInfo? itemsProviderMethod;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
@@ -29,10 +30,11 @@ namespace TaskAutomation.MonoBehaviours
             this.abstractQuestController = abstractQuestController;
         }
 
-        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod)
+        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType)
         {
             this.conditionChecker = conditionChecker;
             this.itemsProviderMethod = itemsProviderMethod;
+            this.dailyQuestType = dailyQuistType;
         }
 
         public void UnsetAbstractQuestController()
@@ -415,6 +417,7 @@ namespace TaskAutomation.MonoBehaviours
             return (quest.QuestStatus == EQuestStatus.AvailableForStart
                 || this.isMarkedAsFailRestartable(quest))
                 && this.shouldAcceptQuestThatCanFail(quest)
+                && this.shouldAcceptDailyQuists(quest)
                 && this.isUnlockedTrader(quest.rawQuestClass.TraderId);
         }
 
@@ -436,6 +439,13 @@ namespace TaskAutomation.MonoBehaviours
             if (shouldBlockBTR)
                 return false;
             return traderInfo.Unlocked;
+        }
+
+        private bool shouldAcceptDailyQuists(QuestClass quest)
+        {
+            if (Globals.AutoAcceptDailyQuests)
+                return true;
+            return quest.rawQuestClass.GetType() != this.dailyQuestType;
         }
 
         private bool shouldAcceptQuestThatCanFail(QuestClass quest)
