@@ -310,8 +310,41 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool isAllowToHandover(Item item)
         {
-            return this.isNotFilledCompoundItem(item)
+            return this.isInEquipmentSlot(item) == false
+                && this.isNotFilledCompoundItem(item)
                 && this.isFilledWithPlates(item) == false;
+        }
+
+        private bool isEquipmentSlot(ItemAddress itemAddress)
+        {
+            if (itemAddress == null)
+                return false;
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification($"ItemAddress {itemAddress.Container.ID} {itemAddress.GetType()}");
+            string containerId = itemAddress.Container.ID.ToLower();
+            if (containerId == null)
+                return false;
+            else if (containerId == "firstprimaryweapon"
+                 || containerId == "secondprimaryweapon"
+                 || containerId == "headwear"
+                 || containerId == "earpiece"
+                 || containerId == "facecover"
+                 || containerId == "eyewear"
+                 || containerId == "tacticalvest"
+                 || containerId == "armorvest"
+                 || containerId == "backpack"
+                 || containerId == "pocket1"
+                 || containerId == "pocket2"
+                 || containerId == "pocket3"
+                 || containerId == "pocket4"
+                 || containerId == "pocket5"
+                 || containerId == "pocket6"
+                 || containerId == "armband"
+                 || containerId == "holster"
+                 || containerId == "scabbard"
+                 || containerId == "securedcontainer")
+                return true;
+            return false;
         }
 
         private bool isFilledCompoundItem(CompoundItem compoundItem)
@@ -331,6 +364,13 @@ namespace TaskAutomation.MonoBehaviours
             if (itemComponent is not ArmorHolderComponent armorHolderComponent)
                 return false;
             return armorHolderComponent.MoveAbleArmorSlots.Any(slot => slot.ContainedItem is ArmorPlateItemClass armorPlateItemClass && armorPlateItemClass.Armor.ArmorClass > Globals.BlockTurnInArmorPlateLevelHigherThan);
+        }
+
+        private bool isInEquipmentSlot(Item item)
+        {
+            if (this.isEquipmentSlot(item.CurrentAddress))
+                return true;
+            return false;
         }
 
         private bool isMarkedAsFailed(QuestClass quest)
