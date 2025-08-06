@@ -1,6 +1,7 @@
 ﻿using EFT;
 using EFT.InventoryLogic;
 using EFT.Quests;
+using EFT.UI;
 using HarmonyLib;
 using SPT.Common.Utils;
 using System;
@@ -22,6 +23,7 @@ namespace TaskAutomation.MonoBehaviours
         private Type? conditionChecker;
         private Type? dailyQuestType;
         private MethodInfo? itemsProviderMethod;
+        private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
@@ -30,11 +32,12 @@ namespace TaskAutomation.MonoBehaviours
             this.abstractQuestController = abstractQuestController;
         }
 
-        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType)
+        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ProfileEndpointFactoryAbstractClass profileEndpointFactory)
         {
             this.conditionChecker = conditionChecker;
             this.itemsProviderMethod = itemsProviderMethod;
             this.dailyQuestType = dailyQuistType;
+            this.profileEndpointFactory = profileEndpointFactory;
         }
 
         public void UnsetAbstractQuestController()
@@ -237,6 +240,20 @@ namespace TaskAutomation.MonoBehaviours
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
+                        if (this.shouldShowHandoverQuestItemsWindow(quest, conditionHandoverItem, result))
+                        {
+                            string traderId = quest.rawQuestClass.TraderId;
+                            TraderControllerClass? traderController = this.profileEndpointFactory?.GetTrader(traderId).TraderController;
+                            HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
+                            handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
+                            {
+                                if (items.Length == 0)
+                                    return;
+                                abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
+                                LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+                            }, canShowCloseButton: true);
+                            return true;
+                        }
                         result = this.getItemsAllowedToHandover(handoverValue, result);
                         if (result.Length == 0)
                             continue;
@@ -458,6 +475,22 @@ namespace TaskAutomation.MonoBehaviours
                 return true;
             else if (Globals.AutoAcceptQuestsThatCanFail)
                 return true;
+            return false;
+        }
+
+        private bool shouldShowHandoverQuestItemsWindow(QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] items)
+        {
+            if (conditionHandoverItem.onlyFoundInRaid == false)
+                return false;
+            string? checkTemplateId = null;
+            foreach (Item item in items)
+            {
+                string templateId = item.TemplateId;
+                if (checkTemplateId == null)
+                    checkTemplateId = templateId;
+                else if (checkTemplateId != templateId)
+                    return true;
+            }
             return false;
         }
     }
