@@ -4,6 +4,7 @@ using EFT.InputSystem;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using TaskAutomation.Helpers;
 using TaskAutomation.MonoBehaviours;
 
 namespace TaskAutomation.Patches.Application
@@ -20,6 +21,8 @@ namespace TaskAutomation.Patches.Application
         {
             UpdateMonoBehaviour sptControllerMonoBehaviour = __instance.GetOrAddComponent<UpdateMonoBehaviour>();
             Singleton<UpdateMonoBehaviour>.Create(sptControllerMonoBehaviour);
+            if (Globals.Debug)
+                LogHelper.LogInfo($"Created UpdateMonoBehaviour");
         }
 
         private bool IsTargetMethod(MethodInfo method)
