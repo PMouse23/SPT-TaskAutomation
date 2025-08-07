@@ -4,6 +4,7 @@ using SPT.Reflection.Utils;
 using System;
 using System.Linq;
 using System.Reflection;
+using TaskAutomation.Helpers;
 
 namespace TaskAutomation.Patches.Raid
 {
@@ -19,6 +20,8 @@ namespace TaskAutomation.Patches.Raid
         private static void PatchPostfix()
         {
             Globals.InRaid = false;
+            if (Globals.Debug)
+                LogHelper.LogInfo($"inRaid={Globals.InRaid}");
         }
     }
 }

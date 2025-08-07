@@ -30,6 +30,8 @@ namespace TaskAutomation.MonoBehaviours
             if (this.abstractQuestController == null)
                 this.StartCoroutine(this.coroutine());
             this.abstractQuestController = abstractQuestController;
+            if (Globals.Debug)
+                LogHelper.LogInfo($"SetAbstractQuestController and StartedCoroutine");
         }
 
         public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ProfileEndpointFactoryAbstractClass profileEndpointFactory)
@@ -38,12 +40,16 @@ namespace TaskAutomation.MonoBehaviours
             this.itemsProviderMethod = itemsProviderMethod;
             this.dailyQuestType = dailyQuistType;
             this.profileEndpointFactory = profileEndpointFactory;
+            if (Globals.Debug)
+                LogHelper.LogInfo($"SetReflection");
         }
 
         public void UnsetAbstractQuestController()
         {
             this.abstractQuestController = null;
             this.StopAllCoroutines();
+            if (Globals.Debug)
+                LogHelper.LogInfo($"StopedAllCoroutines");
         }
 
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
@@ -66,13 +72,20 @@ namespace TaskAutomation.MonoBehaviours
         {
             while (true)
             {
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"Started new run.");
                 yield return new WaitForSeconds(0.5f);
                 if (this.abstractQuestController == null)
                     continue;
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"abstractQuestController not null.");
                 if (Globals.InRaid)
                     continue;
-
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"not in a raid.");
                 var quests = this.abstractQuestController.Quests;
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"handle started quests.");
                 foreach (QuestClass quest in quests.Where(this.isStarted))
                 {
                     if (Globals.Debug)
@@ -91,6 +104,8 @@ namespace TaskAutomation.MonoBehaviours
                 //FinishQuests
                 if (Globals.AutoCompleteQuests)
                 {
+                    if (Globals.Debug)
+                        LogHelper.LogInfo($"complete quests");
                     List<string> questsReadyToFinish = this.getIdsReadyToComplete();
                     foreach (string id in questsReadyToFinish)
                     {
@@ -118,6 +133,8 @@ namespace TaskAutomation.MonoBehaviours
                 quests = this.abstractQuestController.Quests;
                 if (Globals.AutoAcceptQuests)
                 {
+                    if (Globals.Debug)
+                        LogHelper.LogInfo($"start quests");
                     List<string> questsReadyToStart = this.getIdsReadyToStart();
                     foreach (string id in questsReadyToStart)
                     {
@@ -142,6 +159,8 @@ namespace TaskAutomation.MonoBehaviours
                     quests = this.abstractQuestController.Quests;
                 }
                 //FailedQuests
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"check for failed quest.");
                 QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
                 if (failedQuest != null)
                 {
