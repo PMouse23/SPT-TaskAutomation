@@ -261,7 +261,7 @@ namespace TaskAutomation.MonoBehaviours
                             continue;
                         if (Globals.Debug)
                             LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
-                        abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, true);
+                        abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, runNetworkTransaction: true);
                         LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
                         return true;
                     }
@@ -270,6 +270,15 @@ namespace TaskAutomation.MonoBehaviours
                 {
                     if (Globals.SkipWeaponAssembly)
                         this.completeCondition(abstractQuestController, quest, condition);
+                    else if (Globals.BlockTurnInWeapons == false)
+                    {
+                        IEnumerable<Item> playerItems = abstractQuestController.Profile.Inventory.GetPlayerItems(EPlayerItems.NonQuestItemsExceptHideoutStashes);
+                        Item[] weapons = Inventory.GetWeaponAssembly(playerItems, conditionWeaponAssembly).ToArray();
+                        if (weapons == null || weapons.Length == 0)
+                            continue;
+                        abstractQuestController.HandoverItem(quest, conditionWeaponAssembly, weapons, runNetworkTransaction: true);
+                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+                    }
                 }
                 else if (condition is ConditionFindItem conditionFindItem)
                 {
