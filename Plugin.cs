@@ -58,6 +58,8 @@ namespace TaskAutomation
             new LocalGame_Stop().Enable();
 
             new InventoryScreen_Show().Enable();
+            new MenuScreen_Show().Enable();
+            new SessionResultExitStatus_Show().Enable();
         }
 
         private void global_SettingChanged(object sender, EventArgs e)
