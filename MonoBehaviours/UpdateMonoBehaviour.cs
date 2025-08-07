@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using TaskAutomation.Helpers;
 using UnityEngine;
 using static EFT.Profile;
@@ -19,6 +20,8 @@ namespace TaskAutomation.MonoBehaviours
     internal class UpdateMonoBehaviour : MonoBehaviour
     {
         private AbstractQuestControllerClass? abstractQuestController;
+        private CancellationToken? cancellationToken;
+        private CancellationTokenSource? cancellationTokenSource;
         private Type? conditionChecker;
         private Type? dailyQuestType;
         private MethodInfo? itemsProviderMethod;
@@ -43,6 +46,7 @@ namespace TaskAutomation.MonoBehaviours
 
         public void UnsetAbstractQuestController()
         {
+            this.cancellationTokenSource?.Cancel();
             this.abstractQuestController = null;
             this.StopAllCoroutines();
             if (Globals.Debug)
@@ -67,11 +71,15 @@ namespace TaskAutomation.MonoBehaviours
 
         private IEnumerator coroutine()
         {
+            this.cancellationTokenSource = new CancellationTokenSource();
+            this.cancellationToken = cancellationTokenSource.Token;
             while (true)
             {
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Started new run.");
                 yield return new WaitForSeconds(0.5f);
+                if (this.cancellationToken?.IsCancellationRequested == true)
+                    yield break;
                 if (this.abstractQuestController == null)
                     continue;
                 if (Globals.Debug)
@@ -85,6 +93,8 @@ namespace TaskAutomation.MonoBehaviours
                     LogHelper.LogInfo($"Handle started quests.");
                 foreach (QuestClass quest in quests.Where(this.isStarted))
                 {
+                    if (this.cancellationToken?.IsCancellationRequested == true)
+                        yield break;
                     if (Globals.Debug)
                         LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
                     try
@@ -106,6 +116,8 @@ namespace TaskAutomation.MonoBehaviours
                     List<string> questsReadyToFinish = this.getIdsReadyToComplete();
                     foreach (string id in questsReadyToFinish)
                     {
+                        if (this.cancellationToken?.IsCancellationRequested == true)
+                            yield break;
                         try
                         {
                             QuestClass? questToComplete = this.getQuestById(id);
@@ -135,6 +147,8 @@ namespace TaskAutomation.MonoBehaviours
                     List<string> questsReadyToStart = this.getIdsReadyToStart();
                     foreach (string id in questsReadyToStart)
                     {
+                        if (this.cancellationToken?.IsCancellationRequested == true)
+                            yield break;
                         try
                         {
                             QuestClass? questToStart = this.getQuestById(id);
@@ -155,6 +169,8 @@ namespace TaskAutomation.MonoBehaviours
                     }
                     quests = this.abstractQuestController.Quests;
                 }
+                if (this.cancellationToken?.IsCancellationRequested == true)
+                    yield break;
                 //FailedQuests
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Check for failed quest.");
@@ -229,6 +245,8 @@ namespace TaskAutomation.MonoBehaviours
 
             foreach (Condition condition in quest.NecessaryConditions)
             {
+                if (this.cancellationToken?.IsCancellationRequested == true)
+                    return false;
                 if (Globals.Debug)
                     LogHelper.LogInfo($" - {condition.GetType()} {condition.FormattedDescription} IsNecessary:{condition.IsNecessary} Done:{quest.IsConditionDone(condition)}");
                 if (quest.IsConditionDone(condition))
