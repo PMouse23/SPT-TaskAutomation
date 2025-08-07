@@ -80,10 +80,12 @@ namespace TaskAutomation.Helpers
             ConsoleScreen consoleScreen = MonoBehaviourSingleton<PreloaderUI>.Instance.Console;
             foreach (string line in info.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (logType == LogType.Log)
-                    ConsoleScreen.Log(line);
+                if (logType == LogType.Error)
+                    ConsoleScreen.LogError(line);
                 else if (logType == LogType.Warning)
                     ConsoleScreen.LogWarning(line);
+                else if (logType == LogType.Log)
+                    ConsoleScreen.Log(line);
             }
         }
 
