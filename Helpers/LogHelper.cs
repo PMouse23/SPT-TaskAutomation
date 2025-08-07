@@ -1,6 +1,5 @@
 ﻿using BepInEx.Logging;
 using EFT.UI;
-using HarmonyLib;
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -41,8 +40,7 @@ namespace TaskAutomation.Helpers
         {
             LogException(exception);
 
-            string info = $"{exception.Message}{Environment.NewLine}{exception.StackTrace}";
-            ToConsole(info, LogType.Exception);
+            ConsoleScreen.LogException(exception);
         }
 
         internal static void LogInfo(string info)
@@ -82,8 +80,10 @@ namespace TaskAutomation.Helpers
             ConsoleScreen consoleScreen = MonoBehaviourSingleton<PreloaderUI>.Instance.Console;
             foreach (string line in info.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
             {
-                ConsoleScreen.Log(line);
-                AccessTools.Method(typeof(ConsoleScreen), "method_5").Invoke(consoleScreen, new object[] { line, null, logType });
+                if (logType == LogType.Log)
+                    ConsoleScreen.Log(line);
+                else if (logType == LogType.Warning)
+                    ConsoleScreen.LogWarning(line);
             }
         }
 

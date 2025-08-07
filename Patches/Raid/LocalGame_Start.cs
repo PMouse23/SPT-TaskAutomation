@@ -3,6 +3,7 @@ using EFT;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using TaskAutomation.Helpers;
 using TaskAutomation.MonoBehaviours;
 
 namespace TaskAutomation.Patches.Raid
@@ -19,6 +20,8 @@ namespace TaskAutomation.Patches.Raid
         {
             Globals.InRaid = true;
             Singleton<UpdateMonoBehaviour>.Instance.UnsetAbstractQuestController();
+            if (Globals.Debug)
+                LogHelper.LogInfo($"inRaid={Globals.InRaid}");
         }
     }
 }
