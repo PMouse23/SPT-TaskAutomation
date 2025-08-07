@@ -79,14 +79,14 @@ namespace TaskAutomation.MonoBehaviours
                 if (Globals.InRaid)
                     continue;
                 if (Globals.Debug)
-                    LogHelper.LogInfo($"not in a raid.");
+                    LogHelper.LogInfo($"Not in a raid.");
                 var quests = this.abstractQuestController.Quests;
                 if (Globals.Debug)
-                    LogHelper.LogInfo($"handle started quests.");
+                    LogHelper.LogInfo($"Handle started quests.");
                 foreach (QuestClass quest in quests.Where(this.isStarted))
                 {
                     if (Globals.Debug)
-                        LogHelper.LogInfo($"Started {quest.rawQuestClass.Name}");
+                        LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
                     try
                     {
                         this.handleQuest(abstractQuestController, quest);
@@ -102,7 +102,7 @@ namespace TaskAutomation.MonoBehaviours
                 if (Globals.AutoCompleteQuests)
                 {
                     if (Globals.Debug)
-                        LogHelper.LogInfo($"complete quests");
+                        LogHelper.LogInfo($"Complete quests");
                     List<string> questsReadyToFinish = this.getIdsReadyToComplete();
                     foreach (string id in questsReadyToFinish)
                     {
@@ -131,7 +131,7 @@ namespace TaskAutomation.MonoBehaviours
                 if (Globals.AutoAcceptQuests)
                 {
                     if (Globals.Debug)
-                        LogHelper.LogInfo($"start quests");
+                        LogHelper.LogInfo($"Start quests");
                     List<string> questsReadyToStart = this.getIdsReadyToStart();
                     foreach (string id in questsReadyToStart)
                     {
@@ -157,7 +157,7 @@ namespace TaskAutomation.MonoBehaviours
                 }
                 //FailedQuests
                 if (Globals.Debug)
-                    LogHelper.LogInfo($"check for failed quest.");
+                    LogHelper.LogInfo($"Check for failed quest.");
                 QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
                 if (failedQuest != null)
                 {
