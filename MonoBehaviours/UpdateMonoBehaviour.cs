@@ -3,6 +3,7 @@ using EFT.InventoryLogic;
 using EFT.Quests;
 using HarmonyLib;
 using SPT.Common.Utils;
+using SPT.SinglePlayer.Utils.InRaid;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -81,11 +82,14 @@ namespace TaskAutomation.MonoBehaviours
                 if (this.cancellationToken?.IsCancellationRequested == true)
                     yield break;
                 if (this.abstractQuestController == null)
-                    continue;
+                    yield break;
                 if (Globals.Debug)
                     LogHelper.LogInfo($"abstractQuestController not null.");
-                if (Globals.InRaid)
-                    continue;
+                if (RaidTimeUtil.HasRaidLoaded())
+                {
+                    this.UnsetAbstractQuestController();
+                    yield break;
+                }
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Not in a raid.");
                 var quests = this.abstractQuestController.Quests;

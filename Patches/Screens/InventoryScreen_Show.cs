@@ -3,6 +3,7 @@ using EFT;
 using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
+using SPT.SinglePlayer.Utils.InRaid;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -37,7 +38,7 @@ namespace TaskAutomation.Patches.Screens
         [PatchPostfix]
         private static void PatchPostfix(InventoryScreen __instance, object questController)
         {
-            if (Globals.InRaid
+            if (RaidTimeUtil.HasRaidLoaded()
                 || questController is not AbstractQuestControllerClass abstractQuestController)
                 return;
             if (Globals.Debug)
