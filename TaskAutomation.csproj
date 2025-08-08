@@ -93,11 +93,7 @@
     <Compile Include="Globals.cs" />
     <Compile Include="MonoBehaviours\UpdateMonoBehaviour.cs" />
     <Compile Include="Patches\Application\TarkovApplication_Init.cs" />
-    <Compile Include="Patches\Raid\LocalGame_Start.cs" />
-    <Compile Include="Patches\Raid\LocalGame_Stop.cs" />
     <Compile Include="Patches\Screens\InventoryScreen_Show.cs" />
-    <Compile Include="Patches\Screens\MenuScreen_Show.cs" />
-    <Compile Include="Patches\Screens\SessionResultExitStatus_Show.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

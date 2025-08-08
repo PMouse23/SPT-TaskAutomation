@@ -3,7 +3,6 @@ using BepInEx.Configuration;
 using System;
 using TaskAutomation.Helpers;
 using TaskAutomation.Patches.Application;
-using TaskAutomation.Patches.Raid;
 using TaskAutomation.Patches.Screens;
 
 namespace TaskAutomation
@@ -53,13 +52,7 @@ namespace TaskAutomation
         private void enablePatches()
         {
             new TarkovApplication_Init().Enable();
-
-            new LocalGame_Start().Enable();
-            new LocalGame_Stop().Enable();
-
             new InventoryScreen_Show().Enable();
-            new MenuScreen_Show().Enable();
-            new SessionResultExitStatus_Show().Enable();
         }
 
         private void global_SettingChanged(object sender, EventArgs e)

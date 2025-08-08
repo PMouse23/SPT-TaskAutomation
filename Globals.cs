@@ -14,7 +14,6 @@ internal static class Globals
     public static int BlockTurnInArmorPlateLevelHigherThan = 3;
     public static bool BlockTurnInWeapons = false;
     public static bool Debug = false;
-    public static bool InRaid = false;
     public static bool SkipElimination = false;
     public static bool SkipFindAndObtain = false;
     public static bool SkipFindInRaid = false;
