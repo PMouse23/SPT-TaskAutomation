@@ -7,7 +7,7 @@ using TaskAutomation.Patches.Screens;
 
 namespace TaskAutomation
 {
-    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.8.0")]
+    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.8.1")]
     public class Plugin : BaseUnityPlugin
     {
         private ConfigEntry<bool> acceptBTROutOfRaid;
