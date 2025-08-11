@@ -158,7 +158,8 @@ namespace TaskAutomation.MonoBehaviours
                             QuestClass? questToStart = this.getQuestById(id);
                             if (questToStart == null)
                                 continue;
-                            if (this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
+                            if (Globals.AutoAcceptScavQuests == false
+                                && this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
                                 continue;
                             if (Globals.Debug)
                                 LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}, json={Json.Serialize<RawQuestClass>(questToStart.rawQuestClass)}");
