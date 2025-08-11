@@ -127,8 +127,6 @@ namespace TaskAutomation.MonoBehaviours
                             QuestClass? questToComplete = this.getQuestById(id);
                             if (questToComplete == null)
                                 continue;
-                            if (this.abstractQuestController.IsQuestForCurrentProfile(questToComplete) == false)
-                                continue;
                             if (Globals.Debug)
                                 LogHelper.LogInfo($"AvailableForFinish {questToComplete.rawQuestClass.Name}");
                             this.abstractQuestController.FinishQuest(questToComplete, true);
