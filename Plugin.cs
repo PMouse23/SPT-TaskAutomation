@@ -15,6 +15,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> autoAcceptDailyQuests;
         private ConfigEntry<bool> autoAcceptQuests;
         private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
+        private ConfigEntry<bool> autoAcceptScavQuests;
         private ConfigEntry<bool> autoCompleteQuests;
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
@@ -92,6 +93,9 @@ namespace TaskAutomation
             this.autoAcceptQuestsThatCanFail = this.Config.Bind("Automation", "AutoAcceptQuestsThatCanFail", false, "Automatically accept quests that are that can fail.");
             this.autoAcceptQuestsThatCanFail.SettingChanged += this.global_SettingChanged;
 
+            this.autoAcceptScavQuests = this.Config.Bind("Automation", "AutoAcceptScavQuests", false, "Automatically accept scav quests.");
+            this.autoAcceptScavQuests.SettingChanged += this.global_SettingChanged;
+
             this.blockTurnInArmorPlateLevelHigherThan = this.Config.Bind("Automation", "BlockTurnInArmorPlateLevelHigherThan", 3, new ConfigDescription("Block the automatic handover of items that have plates higher then level.", new AcceptableValueRange<int>(0, 6)));
             this.blockTurnInArmorPlateLevelHigherThan.SettingChanged += this.global_SettingChanged;
 
@@ -143,6 +147,7 @@ namespace TaskAutomation
             Globals.AutoAcceptDailyQuests = this.autoAcceptDailyQuests.Value;
             Globals.AutoAcceptQuests = this.autoAcceptQuests.Value;
             Globals.AutoAcceptQuestsThatCanFail = this.autoAcceptQuestsThatCanFail.Value;
+            Globals.AutoAcceptScavQuests = this.autoAcceptScavQuests.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
