@@ -15,11 +15,13 @@ namespace TaskAutomation
         private ConfigEntry<bool> autoAcceptDailyQuests;
         private ConfigEntry<bool> autoAcceptQuests;
         private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
+        private ConfigEntry<bool> autoAcceptScavQuests;
         private ConfigEntry<bool> autoCompleteQuests;
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
         private ConfigEntry<bool> autoRestartFailedQuests;
         private ConfigEntry<int> blockTurnInArmorPlateLevelHigherThan;
+        private ConfigEntry<bool> blockTurnInCurrency;
         private ConfigEntry<bool> blockTurnInWeapons;
         private ConfigEntry<bool> debug;
         private ConfigEntry<bool> skipElimination;
@@ -33,6 +35,8 @@ namespace TaskAutomation
         private ConfigEntry<bool> skipTraderLoyalty;
         private ConfigEntry<bool> skipVisitPlace;
         private ConfigEntry<bool> skipWeaponAssembly;
+        private ConfigEntry<double> thresholdCurrencyHandover;
+        private ConfigEntry<double> thresholdGPCoinHandover;
 
         private void Awake()
         {
@@ -92,11 +96,23 @@ namespace TaskAutomation
             this.autoAcceptQuestsThatCanFail = this.Config.Bind("Automation", "AutoAcceptQuestsThatCanFail", false, "Automatically accept quests that are that can fail.");
             this.autoAcceptQuestsThatCanFail.SettingChanged += this.global_SettingChanged;
 
-            this.blockTurnInArmorPlateLevelHigherThan = this.Config.Bind("Automation", "BlockTurnInArmorPlateLevelHigherThan", 3, new ConfigDescription("Block the automatic handover of items that have plates higher then level.", new AcceptableValueRange<int>(0, 6)));
+            this.autoAcceptScavQuests = this.Config.Bind("Automation", "AutoAcceptScavQuests", false, "Automatically accept scav quests.");
+            this.autoAcceptScavQuests.SettingChanged += this.global_SettingChanged;
+
+            this.blockTurnInArmorPlateLevelHigherThan = this.Config.Bind("Handover Items", "BlockTurnInArmorPlateLevelHigherThan", 3, new ConfigDescription("Block the automatic handover of items that have plates higher then level.", new AcceptableValueRange<int>(0, 6)));
             this.blockTurnInArmorPlateLevelHigherThan.SettingChanged += this.global_SettingChanged;
 
-            this.blockTurnInWeapons = this.Config.Bind("Automation", "BlockTurnInWeapons", false, "Block the automatic handover of weapons.");
+            this.blockTurnInCurrency = this.Config.Bind("Handover Items", "BlockTurnInCurrency", false, "Block the automatic handover of currency (Rubles, Dollars, Euros and GP Coins).");
+            this.blockTurnInCurrency.SettingChanged += this.global_SettingChanged;
+
+            this.blockTurnInWeapons = this.Config.Bind("Handover Items", "BlockTurnInWeapons", false, "Block the automatic handover of weapons.");
             this.blockTurnInWeapons.SettingChanged += this.global_SettingChanged;
+
+            this.thresholdCurrencyHandover = this.Config.Bind("Handover Items", "ThresholdCurrencyHandover", 1.5, "Threshold for the number of times you want to have the currency amount before handing it in.");
+            this.thresholdCurrencyHandover.SettingChanged += this.global_SettingChanged;
+
+            this.thresholdGPCoinHandover = this.Config.Bind("Handover Items", "ThresholdGPCoinHandover", 0.0, "Threshold for the number of times you want to have the GP Coin amount before handing it in.");
+            this.thresholdGPCoinHandover.SettingChanged += this.global_SettingChanged;
 
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
             this.skipFindInRaid.SettingChanged += this.global_SettingChanged;
@@ -143,12 +159,16 @@ namespace TaskAutomation
             Globals.AutoAcceptDailyQuests = this.autoAcceptDailyQuests.Value;
             Globals.AutoAcceptQuests = this.autoAcceptQuests.Value;
             Globals.AutoAcceptQuestsThatCanFail = this.autoAcceptQuestsThatCanFail.Value;
+            Globals.AutoAcceptScavQuests = this.autoAcceptScavQuests.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
             Globals.AutoRestartFailedQuests = this.autoRestartFailedQuests.Value;
             Globals.BlockTurnInArmorPlateLevelHigherThan = this.blockTurnInArmorPlateLevelHigherThan.Value;
+            Globals.BlockTurnInCurrency = this.blockTurnInCurrency.Value;
             Globals.BlockTurnInWeapons = this.blockTurnInWeapons.Value;
+            Globals.ThresholdCurrencyHandover = this.thresholdCurrencyHandover.Value;
+            Globals.ThresholdGPCoinHandover = this.thresholdGPCoinHandover.Value;
             Globals.SkipElimination = this.skipElimination.Value;
             Globals.SkipFindInRaid = this.skipFindInRaid.Value;
             Globals.SkipFindAndObtain = this.skipFindAndObtain.Value;

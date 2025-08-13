@@ -7,11 +7,13 @@ internal static class Globals
     public static bool AutoAcceptDailyQuests = true;
     public static bool AutoAcceptQuests = true;
     public static bool AutoAcceptQuestsThatCanFail = false;
+    public static bool AutoAcceptScavQuests = false;
     public static bool AutoCompleteQuests = true;
     public static bool AutoHandoverFindInRaid = true;
     public static bool AutoHandoverObtain = true;
     public static bool AutoRestartFailedQuests = true;
     public static int BlockTurnInArmorPlateLevelHigherThan = 3;
+    public static bool BlockTurnInCurrency = false;
     public static bool BlockTurnInWeapons = false;
     public static bool Debug = false;
     public static bool SkipElimination = false;
@@ -26,4 +28,6 @@ internal static class Globals
     public static bool SkipTraderLoyalty = false;
     public static bool SkipVisitPlace = false;
     public static bool SkipWeaponAssembly = false;
+    public static double ThresholdCurrencyHandover = 1.5;
+    public static double ThresholdGPCoinHandover = 0.0;
 }

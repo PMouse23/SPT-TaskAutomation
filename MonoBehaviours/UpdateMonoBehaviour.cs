@@ -20,6 +20,7 @@ namespace TaskAutomation.MonoBehaviours
 {
     internal class UpdateMonoBehaviour : MonoBehaviour
     {
+        private const string GPCOINTEMPLATEID = "5d235b4d86f7742e017bc88a";
         private AbstractQuestControllerClass? abstractQuestController;
         private CancellationToken? cancellationToken;
         private CancellationTokenSource? cancellationTokenSource;
@@ -127,8 +128,6 @@ namespace TaskAutomation.MonoBehaviours
                             QuestClass? questToComplete = this.getQuestById(id);
                             if (questToComplete == null)
                                 continue;
-                            if (this.abstractQuestController.IsQuestForCurrentProfile(questToComplete) == false)
-                                continue;
                             if (Globals.Debug)
                                 LogHelper.LogInfo($"AvailableForFinish {questToComplete.rawQuestClass.Name}");
                             this.abstractQuestController.FinishQuest(questToComplete, true);
@@ -158,7 +157,8 @@ namespace TaskAutomation.MonoBehaviours
                             QuestClass? questToStart = this.getQuestById(id);
                             if (questToStart == null)
                                 continue;
-                            if (this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
+                            if (Globals.AutoAcceptScavQuests == false
+                                && this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
                                 continue;
                             if (Globals.Debug)
                                 LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}, json={Json.Serialize<RawQuestClass>(questToStart.rawQuestClass)}");
@@ -225,9 +225,20 @@ namespace TaskAutomation.MonoBehaviours
             return questsReadyToStart.Select(quest => quest.Id).ToList();
         }
 
+        private int getItemCount(string templateId)
+        {
+            if (this.abstractQuestController == null)
+                return 0;
+            int count = 0;
+            IEnumerable<Item> items = this.abstractQuestController.Profile.Inventory.GetAllItemByTemplate(templateId);
+            foreach (Item item in items)
+                count += item.StackObjectsCount;
+            return count;
+        }
+
         private Item[] getItemsAllowedToHandover(double handoverValue, Item[] result)
         {
-            return result.Where(this.isAllowToHandover).Take((int)handoverValue).ToArray();
+            return result.Where(item => this.isAllowToHandover(item, handoverValue)).Take((int)handoverValue).ToArray();
         }
 
         private QuestClass? getQuestById(string id)
@@ -360,13 +371,26 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool isAllowToHandover(Item item)
+        private bool isAllowToHandover(Item item, double handoverValue)
         {
             return this.isInEquipmentSlot(item) == false
                 && this.isBlockedWeapon(item) == false
                 && this.isPartOfWeaponOrArmor(item) == false
+                && this.isBlockedCurrency(item, (int)handoverValue) == false
                 && this.isFilledCompoundItem(item) == false
                 && this.isFilledWithPlates(item) == false;
+        }
+
+        private bool isBlockedCurrency(Item item, int handoverValue)
+        {
+            if (item is not MoneyItemClass moneyItemClass)
+                return false;
+            else if (Globals.BlockTurnInCurrency)
+                return true;
+            int itemCount = this.getItemCount(item.TemplateId);
+            if (item.TemplateId == GPCOINTEMPLATEID)
+                return itemCount * Globals.ThresholdGPCoinHandover >= handoverValue;
+            return itemCount * Globals.ThresholdCurrencyHandover >= handoverValue;
         }
 
         private bool isBlockedWeapon(Item item)
