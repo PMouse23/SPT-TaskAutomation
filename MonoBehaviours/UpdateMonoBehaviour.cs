@@ -375,6 +375,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             return this.isInEquipmentSlot(item) == false
                 && this.isBlockedWeapon(item) == false
+                && this.isPartOfWeaponOrArmor(item) == false
                 && this.isBlockedCurrency(item, (int)handoverValue) == false
                 && this.isFilledCompoundItem(item) == false
                 && this.isFilledWithPlates(item) == false;
@@ -479,6 +480,17 @@ namespace TaskAutomation.MonoBehaviours
         {
             return Globals.AutoRestartFailedQuests
                 && quest.QuestStatus == EQuestStatus.FailRestartable;
+        }
+
+        private bool isPartOfWeaponOrArmor(Item item)
+        {
+            if (item.CurrentAddress == null)
+                return false;
+            else if (item.CurrentAddress.Container.ParentItem is Weapon)
+                return true;
+            else if (item.CurrentAddress.Container.ParentItem is ArmorItemClass)
+                return true;
+            return this.isPartOfWeaponOrArmor(item.CurrentAddress.Container.ParentItem);
         }
 
         private bool isReadyToFinish(QuestClass quest)
