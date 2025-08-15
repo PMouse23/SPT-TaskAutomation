@@ -389,8 +389,11 @@ namespace TaskAutomation.MonoBehaviours
                 return true;
             int itemCount = this.getItemCount(item.TemplateId);
             if (item.TemplateId == GPCOINTEMPLATEID)
-                return itemCount * Globals.ThresholdGPCoinHandover >= handoverValue;
-            return itemCount * Globals.ThresholdCurrencyHandover >= handoverValue;
+                handoverValue = (int)(handoverValue * Globals.ThresholdGPCoinHandover);
+            handoverValue = (int)(handoverValue * Globals.ThresholdCurrencyHandover);
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification($"count: {itemCount}, expected: {handoverValue}");
+            return itemCount < handoverValue;
         }
 
         private bool isBlockedWeapon(Item item)
