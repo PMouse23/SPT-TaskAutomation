@@ -487,13 +487,16 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool isPartOfWeaponOrArmor(Item item)
         {
-            if (item.CurrentAddress == null)
-                return false;
-            else if (item.CurrentAddress.Container.ParentItem is Weapon)
+            if (Globals.Debug)
+                LogHelper.LogInfo($"WeaponOrArmor: check {item.LocalizedName()} ");
+            if (item.CurrentAddress?.Container is Slot slot
+                && (slot.ParentItem is Weapon || slot.ParentItem is ArmoredEquipmentItemClass))
+            {
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"WeaponOrArmor: {item.Id} SlotParentItemType: {slot.ParentItem.GetType()}");
                 return true;
-            else if (item.CurrentAddress.Container.ParentItem is ArmorItemClass)
-                return true;
-            return this.isPartOfWeaponOrArmor(item.CurrentAddress.Container.ParentItem);
+            }
+            return false;
         }
 
         private bool isReadyToFinish(QuestClass quest)
