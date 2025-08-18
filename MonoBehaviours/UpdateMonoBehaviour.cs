@@ -20,6 +20,7 @@ namespace TaskAutomation.MonoBehaviours
 {
     internal class UpdateMonoBehaviour : MonoBehaviour
     {
+        private const string GPCOINTEMPLATEID = "5d235b4d86f7742e017bc88a";
         private AbstractQuestControllerClass? abstractQuestController;
         private CancellationToken? cancellationToken;
         private CancellationTokenSource? cancellationTokenSource;
@@ -95,22 +96,38 @@ namespace TaskAutomation.MonoBehaviours
                 var quests = this.abstractQuestController.Quests;
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Handle started quests.");
-                foreach (QuestClass quest in quests.Where(this.isStarted))
+                IEnumerable<QuestClass> quistEnumerable = quests.Where(this.isStarted);
+                using (IEnumerator<QuestClass> enumerator = quistEnumerable.GetEnumerator())
                 {
-                    if (this.cancellationToken?.IsCancellationRequested == true)
-                        yield break;
-                    if (Globals.Debug)
-                        LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
-                    try
+                    int sameQuestCount = 0;
+                    bool moveNext = enumerator.MoveNext();
+                    while (moveNext)
                     {
-                        this.handleQuest(abstractQuestController, quest);
+                        bool restart = false;
+                        if (this.cancellationToken?.IsCancellationRequested == true)
+                            yield break;
+                        QuestClass quest = enumerator.Current;
+                        if (Globals.Debug)
+                            LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
+                        try
+                        {
+                            restart = this.handleQuest(abstractQuestController, quest);
+                        }
+                        catch (Exception exception)
+                        {
+                            LogHelper.LogExceptionToConsole(exception);
+                        }
+                        yield return new WaitForSeconds(0.5f);
+                        quests = this.abstractQuestController.Quests;
+                        if (restart == false
+                            || sameQuestCount > 10)
+                        {
+                            moveNext = enumerator.MoveNext();
+                            sameQuestCount = 0;
+                        }
+                        else
+                            sameQuestCount++;
                     }
-                    catch (Exception exception)
-                    {
-                        LogHelper.LogExceptionToConsole(exception);
-                    }
-                    yield return new WaitForSeconds(0.5f);
-                    quests = this.abstractQuestController.Quests;
                 }
                 //FinishQuests
                 if (Globals.AutoCompleteQuests)
@@ -224,9 +241,20 @@ namespace TaskAutomation.MonoBehaviours
             return questsReadyToStart.Select(quest => quest.Id).ToList();
         }
 
+        private int getItemCount(string templateId)
+        {
+            if (this.abstractQuestController == null)
+                return 0;
+            int count = 0;
+            IEnumerable<Item> items = this.abstractQuestController.Profile.Inventory.GetAllItemByTemplate(templateId);
+            foreach (Item item in items)
+                count += item.StackObjectsCount;
+            return count;
+        }
+
         private Item[] getItemsAllowedToHandover(double handoverValue, Item[] result)
         {
-            return result.Where(this.isAllowToHandover).Take((int)handoverValue).ToArray();
+            return result.Where(item => this.isAllowToHandover(item, handoverValue)).Take((int)handoverValue).ToArray();
         }
 
         private QuestClass? getQuestById(string id)
@@ -359,12 +387,29 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool isAllowToHandover(Item item)
+        private bool isAllowToHandover(Item item, double handoverValue)
         {
             return this.isInEquipmentSlot(item) == false
                 && this.isBlockedWeapon(item) == false
+                && this.isPartOfWeaponOrArmor(item) == false
+                && this.isBlockedCurrency(item, (int)handoverValue) == false
                 && this.isFilledCompoundItem(item) == false
                 && this.isFilledWithPlates(item) == false;
+        }
+
+        private bool isBlockedCurrency(Item item, int handoverValue)
+        {
+            if (item is not MoneyItemClass moneyItemClass)
+                return false;
+            else if (Globals.BlockTurnInCurrency)
+                return true;
+            int itemCount = this.getItemCount(item.TemplateId);
+            if (item.TemplateId == GPCOINTEMPLATEID)
+                handoverValue = (int)(handoverValue * Globals.ThresholdGPCoinHandover);
+            handoverValue = (int)(handoverValue * Globals.ThresholdCurrencyHandover);
+            if (Globals.Debug)
+                LogHelper.LogInfo($"count: {itemCount}, expected: {handoverValue}");
+            return itemCount < handoverValue;
         }
 
         private bool isBlockedWeapon(Item item)
@@ -454,6 +499,20 @@ namespace TaskAutomation.MonoBehaviours
         {
             return Globals.AutoRestartFailedQuests
                 && quest.QuestStatus == EQuestStatus.FailRestartable;
+        }
+
+        private bool isPartOfWeaponOrArmor(Item item)
+        {
+            if (Globals.Debug)
+                LogHelper.LogInfo($"WeaponOrArmor: check {item.LocalizedName()} ");
+            if (item.CurrentAddress?.Container is Slot slot
+                && (slot.ParentItem is Weapon || slot.ParentItem is ArmoredEquipmentItemClass))
+            {
+                if (Globals.Debug)
+                    LogHelper.LogInfo($"WeaponOrArmor: {item.Id} SlotParentItemType: {slot.ParentItem.GetType()}");
+                return true;
+            }
+            return false;
         }
 
         private bool isReadyToFinish(QuestClass quest)
