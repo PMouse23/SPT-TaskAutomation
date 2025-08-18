@@ -96,22 +96,38 @@ namespace TaskAutomation.MonoBehaviours
                 var quests = this.abstractQuestController.Quests;
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Handle started quests.");
-                foreach (QuestClass quest in quests.Where(this.isStarted))
+                IEnumerable<QuestClass> quistEnumerable = quests.Where(this.isStarted);
+                using (IEnumerator<QuestClass> enumerator = quistEnumerable.GetEnumerator())
                 {
-                    if (this.cancellationToken?.IsCancellationRequested == true)
-                        yield break;
-                    if (Globals.Debug)
-                        LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
-                    try
+                    int sameQuestCount = 0;
+                    bool moveNext = enumerator.MoveNext();
+                    while (moveNext)
                     {
-                        this.handleQuest(abstractQuestController, quest);
+                        bool restart = false;
+                        if (this.cancellationToken?.IsCancellationRequested == true)
+                            yield break;
+                        QuestClass quest = enumerator.Current;
+                        if (Globals.Debug)
+                            LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
+                        try
+                        {
+                            restart = this.handleQuest(abstractQuestController, quest);
+                        }
+                        catch (Exception exception)
+                        {
+                            LogHelper.LogExceptionToConsole(exception);
+                        }
+                        yield return new WaitForSeconds(0.5f);
+                        quests = this.abstractQuestController.Quests;
+                        if (restart == false
+                            || sameQuestCount > 10)
+                        {
+                            moveNext = enumerator.MoveNext();
+                            sameQuestCount = 0;
+                        }
+                        else
+                            sameQuestCount++;
                     }
-                    catch (Exception exception)
-                    {
-                        LogHelper.LogExceptionToConsole(exception);
-                    }
-                    yield return new WaitForSeconds(0.5f);
-                    quests = this.abstractQuestController.Quests;
                 }
                 //FinishQuests
                 if (Globals.AutoCompleteQuests)
