@@ -392,7 +392,7 @@ namespace TaskAutomation.MonoBehaviours
                 handoverValue = (int)(handoverValue * Globals.ThresholdGPCoinHandover);
             handoverValue = (int)(handoverValue * Globals.ThresholdCurrencyHandover);
             if (Globals.Debug)
-                LogHelper.LogInfoWithNotification($"count: {itemCount}, expected: {handoverValue}");
+                LogHelper.LogInfo($"count: {itemCount}, expected: {handoverValue}");
             return itemCount < handoverValue;
         }
 
