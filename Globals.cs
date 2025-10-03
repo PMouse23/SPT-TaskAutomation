@@ -30,4 +30,5 @@ internal static class Globals
     public static bool SkipWeaponAssembly = false;
     public static double ThresholdCurrencyHandover = 1.5;
     public static double ThresholdGPCoinHandover = 0.0;
+    public static bool UseHandoverQuestItemsWindow = true;
 }

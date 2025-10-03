@@ -37,6 +37,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> skipWeaponAssembly;
         private ConfigEntry<double> thresholdCurrencyHandover;
         private ConfigEntry<double> thresholdGPCoinHandover;
+        private ConfigEntry<bool> useHandoverQuestItemsWindow;
 
         private void Awake()
         {
@@ -89,6 +90,9 @@ namespace TaskAutomation
 
             this.autoHandoverObtain = this.Config.Bind("Automation", "AutoFindAndObtain", true, "Automatically handover find and obtain items.");
             this.autoHandoverObtain.SettingChanged += this.global_SettingChanged;
+
+            this.useHandoverQuestItemsWindow = this.Config.Bind("Automation", "UseHandoverQuestItemsWindow", true, "Use the HandoverQuestItemsWindow to handover items.");
+            this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
 
             this.autoRestartFailedQuests = this.Config.Bind("Automation", "AutoRestartFailedQuests", true, "Automatically restart failed quests.");
             this.autoRestartFailedQuests.SettingChanged += this.global_SettingChanged;
@@ -180,6 +184,7 @@ namespace TaskAutomation
             Globals.SkipTraderLoyalty = this.skipTraderLoyalty.Value;
             Globals.SkipVisitPlace = this.skipVisitPlace.Value;
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
+            Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
         }
 
         private void skipElimination_SettingChanged(object sender, EventArgs e)
