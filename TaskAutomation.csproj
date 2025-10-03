@@ -108,13 +108,15 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>if not exist "D:\Offline\BepInEx\plugins\$(TargetName)" mkdir "D:\Offline\BepInEx\plugins\$(TargetName)"
-      copy "$(TargetPath)" "D:\Offline\BepInEx\plugins\$(TargetName).dll"
+    <PostBuildEvent>copy "$(TargetPath)" "D:\Offline\BepInEx\plugins\$(TargetName).dll"
+copy "$(TargetPath)" "D:\Offline_3.11.4\BepInEx\plugins\$(TargetName).dll"
 if $(ConfigurationName) == Debug (
       copy "$(TargetDir)$(TargetName).pdb" "D:\Offline\BepInEx\plugins\$(TargetName).pdb"
+      copy "$(TargetDir)$(TargetName).pdb" "D:\Offline_3.11.4\BepInEx\plugins\$(TargetName).pdb"
 ) else (
-      del "D:\Offline\BepInEx\plugins\$(TargetName)\$(TargetName).pdb"
+      del "D:\Offline\BepInEx\plugins\$(TargetName).pdb"
+      del "D:\Offline_3.11.4\BepInEx\plugins\$(TargetName).pdb"
 )
-    </PostBuildEvent>
+</PostBuildEvent>
   </PropertyGroup>
 </Project>

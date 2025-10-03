@@ -43,7 +43,11 @@ namespace TaskAutomation.Patches.Screens
                 return;
             if (Globals.Debug)
                 LogHelper.LogInfo($"Found abstractQuestController.");
-            Singleton<UpdateMonoBehaviour>.Instance.SetReflection(conditionChecker, itemsProviderMethod, dailyTaskType);
+            var sessionField = AccessTools.Field(typeof(InventoryScreen), "iSession");
+            ProfileEndpointFactoryAbstractClass profileEndpointFactory = sessionField.GetValue(__instance) as ProfileEndpointFactoryAbstractClass;
+            if (Globals.Debug)
+                LogHelper.LogInfo($"Found profileEndpointFactory {profileEndpointFactory.GetType()}.");
+            Singleton<UpdateMonoBehaviour>.Instance.SetReflection(conditionChecker, itemsProviderMethod, dailyTaskType, profileEndpointFactory);
             Singleton<UpdateMonoBehaviour>.Instance.SetAbstractQuestController(abstractQuestController);
         }
 

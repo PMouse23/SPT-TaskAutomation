@@ -1,6 +1,7 @@
 ﻿using EFT;
 using EFT.InventoryLogic;
 using EFT.Quests;
+using EFT.UI;
 using HarmonyLib;
 using SPT.Common.Utils;
 using SPT.SinglePlayer.Utils.InRaid;
@@ -27,6 +28,8 @@ namespace TaskAutomation.MonoBehaviours
         private Type? conditionChecker;
         private Type? dailyQuestType;
         private MethodInfo? itemsProviderMethod;
+        private FieldInfo? openFieldInfo;
+        private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
@@ -37,11 +40,14 @@ namespace TaskAutomation.MonoBehaviours
                 LogHelper.LogInfo($"SetAbstractQuestController and StartedCoroutine");
         }
 
-        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType)
+        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ProfileEndpointFactoryAbstractClass profileEndpointFactory)
         {
             this.conditionChecker = conditionChecker;
             this.itemsProviderMethod = itemsProviderMethod;
             this.dailyQuestType = dailyQuistType;
+            this.profileEndpointFactory = profileEndpointFactory;
+            this.openFieldInfo = typeof(HandoverQuestItemsWindow).GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.NonPublic).FirstOrDefault(fi => fi.Name == "Open");
+            LogHelper.LogInfo($"{this.openFieldInfo}");
             if (Globals.Debug)
                 LogHelper.LogInfo($"SetReflection");
         }
@@ -273,6 +279,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (quest.QuestStatus != EQuestStatus.Started)
                 return false;
+            if (this.isHandoverQuestItemsWindowOpen())
+                return false;
 
             foreach (Condition condition in quest.NecessaryConditions)
             {
@@ -305,6 +313,10 @@ namespace TaskAutomation.MonoBehaviours
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
+
+                        //this.showHandoverQuestItemsWindow(abstractQuestController, quest, conditionHandoverItem, currentValue, result);
+                        //return true;
+
                         result = this.getItemsAllowedToHandover(handoverValue, result);
                         if (result.Length == 0)
                             continue;
@@ -483,6 +495,16 @@ namespace TaskAutomation.MonoBehaviours
             return armorHolderComponent.MoveAbleArmorSlots.Any(slot => slot.ContainedItem is ArmorPlateItemClass armorPlateItemClass && armorPlateItemClass.Armor.ArmorClass > Globals.BlockTurnInArmorPlateLevelHigherThan);
         }
 
+        private bool isHandoverQuestItemsWindowOpen()
+        {
+            if (this.openFieldInfo == null)
+                return false;
+            HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
+            if (handoverItemsWindow == null)
+                return false;
+            return (bool)this.openFieldInfo.GetValue(handoverItemsWindow);
+        }
+
         private bool isInEquipmentSlot(Item item)
         {
             if (this.isEquipmentSlot(item.CurrentAddress))
@@ -567,6 +589,16 @@ namespace TaskAutomation.MonoBehaviours
             else if (Globals.AutoAcceptQuestsThatCanFail)
                 return true;
             return false;
+        }
+
+        private void showHandoverQuestItemsWindow(AbstractQuestControllerClass abstractQuestController, QuestClass quest, ConditionHandoverItem conditionHandoverItem, double currentValue, Item[] result)
+        {
+            string traderId = quest.rawQuestClass.TraderId;
+            TraderControllerClass? traderController = this.profileEndpointFactory?.GetTrader(traderId).TraderController;
+            HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
+            handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
+            {
+            }, canShowCloseButton: true);
         }
     }
 }
