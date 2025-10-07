@@ -274,9 +274,9 @@ namespace TaskAutomation.MonoBehaviours
             return count;
         }
 
-        private Item[] getItemsAllowedToHandover(double handoverValue, Item[] result)
+        private Item[] getItemsAllowedToHandover(double take, Item[] result)
         {
-            return result.Where(item => this.isAllowToHandover(item, handoverValue)).Take((int)handoverValue).ToArray();
+            return result.Where(item => this.isAllowToHandover(item, take)).Take((int)take).ToArray();
         }
 
         private QuestClass? getQuestById(string id)
@@ -337,14 +337,17 @@ namespace TaskAutomation.MonoBehaviours
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
-                        result = this.getItemsAllowedToHandover(handoverValue, result);
                         handoverValue = result.Length;
                         if (Globals.Debug)
                             LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
                         if (handoverValue == 0)
                             continue;
-                        if (Globals.UseHandoverQuestItemsWindow == false)
+                        if (this.shouldShowHandoverQuestItemsWindow(quest, conditionHandoverItem, result) == false)
+                        {
+                            result = this.getItemsAllowedToHandover(take: handoverValue, result);
                             return this.handoverItems(abstractQuestController, handoverValue, result, quest, conditionHandoverItem);
+                        }
+                        result = this.getItemsAllowedToHandover(take: 100, result);
                         this.showHandoverQuestItemsWindow(abstractQuestController, quest, conditionHandoverItem, result, currentValue, handoverValue);
                         return true;
                     }
@@ -624,6 +627,24 @@ namespace TaskAutomation.MonoBehaviours
                 return true;
             else if (Globals.AutoAcceptQuestsThatCanFail)
                 return true;
+            return false;
+        }
+
+        private bool shouldShowHandoverQuestItemsWindow(QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] items)
+        {
+            if (Globals.UseHandoverQuestItemsWindow)
+                return true;
+            if (conditionHandoverItem.onlyFoundInRaid == false)
+                return false;
+            string? checkTemplateId = null;
+            foreach (Item item in items)
+            {
+                string templateId = item.TemplateId;
+                if (checkTemplateId == null)
+                    checkTemplateId = templateId;
+                else if (checkTemplateId != templateId)
+                    return true;
+            }
             return false;
         }
 
