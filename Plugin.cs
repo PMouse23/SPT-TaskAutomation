@@ -8,9 +8,11 @@ using UnityEngine;
 
 namespace TaskAutomation
 {
-    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.9.0")]
+    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", VERSION)]
     public class Plugin : BaseUnityPlugin
     {
+        public const string VERSION = "0.9.0";
+
         private ConfigEntry<bool> acceptBTROutOfRaid;
         private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
         private ConfigEntry<bool> autoAcceptDailyQuests;
