@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using TaskAutomation.Helpers;
+using TMPro;
 using UnityEngine;
 using static EFT.Profile;
 
@@ -627,13 +628,22 @@ namespace TaskAutomation.MonoBehaviours
         private void showHandoverQuestItemsWindow(AbstractQuestControllerClass abstractQuestController, QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] result, double currentValue, double handoverValue)
         {
             string traderId = quest.rawQuestClass.TraderId;
-            TraderControllerClass? traderController = this.profileEndpointFactory?.GetTrader(traderId).TraderController;
+            TraderClass? trader = this.profileEndpointFactory?.GetTrader(traderId);
+            if (trader == null)
+                return;
+            TraderControllerClass? traderController = trader.TraderController;
+            if (traderController == null)
+                return;
             HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
             this.lastConditionHandoverItemId = conditionHandoverItem.id;
             this.windowContext = handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
             {
                 this.handoverItems(abstractQuestController, handoverValue, result, quest, conditionHandoverItem);
             }, canShowCloseButton: true);
+            string text = ((TMP_Text)handoverItemsWindow.Caption).text;
+            text = text.Replace("to trader", $"to {trader.LocalizedName}");
+            text += $" for quests: {quest.rawQuestClass.Name}";
+            ((TMP_Text)handoverItemsWindow.Caption).text = text;
         }
     }
 }

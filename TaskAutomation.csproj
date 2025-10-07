@@ -35,6 +35,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>Libraries\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>Libraries\EscapeFromTarkov_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>Libraries\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
