@@ -29,8 +29,11 @@ namespace TaskAutomation.MonoBehaviours
         private Type? conditionChecker;
         private Type? dailyQuestType;
         private MethodInfo? itemsProviderMethod;
+        private MongoID lastConditionHandoverItemId = MongoID.Generate();
         private FieldInfo? openFieldInfo;
         private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
+
+        private GClass3546? windowContext;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
@@ -282,7 +285,8 @@ namespace TaskAutomation.MonoBehaviours
                 return false;
             if (this.isHandoverQuestItemsWindowOpen())
                 return false;
-
+            if (this.lastConditionHandoverItemIsDeclined())
+                this.declinedHandoverItemConditions.Add(this.lastConditionHandoverItemId);
             foreach (Condition condition in quest.NecessaryConditions)
             {
                 if (this.cancellationToken?.IsCancellationRequested == true)
@@ -586,6 +590,11 @@ namespace TaskAutomation.MonoBehaviours
             return traderInfo.Unlocked;
         }
 
+        private bool lastConditionHandoverItemIsDeclined()
+        {
+            return this.windowContext != null && this.windowContext.gparam_0 == false;
+        }
+
         private bool shouldAcceptDailyQuists(QuestClass quest)
         {
             if (Globals.AutoAcceptDailyQuests)
@@ -611,14 +620,11 @@ namespace TaskAutomation.MonoBehaviours
             string traderId = quest.rawQuestClass.TraderId;
             TraderControllerClass? traderController = this.profileEndpointFactory?.GetTrader(traderId).TraderController;
             HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
-            handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
+            this.lastConditionHandoverItemId = conditionHandoverItem.id;
+            this.windowContext = handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
             {
                 this.handoverItems(abstractQuestController, handoverValue, result, quest, conditionHandoverItem);
             }, canShowCloseButton: true);
-            handoverItemsWindow.WindowContext.OnDecline += () =>
-            {
-                this.declinedHandoverItemConditions.Add(conditionHandoverItem.id);
-            };
         }
     }
 }
