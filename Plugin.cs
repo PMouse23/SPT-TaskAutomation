@@ -93,12 +93,6 @@ namespace TaskAutomation
             this.autoHandoverObtain = this.Config.Bind("Automation", "AutoFindAndObtain", true, "Automatically handover find and obtain items.");
             this.autoHandoverObtain.SettingChanged += this.global_SettingChanged;
 
-            this.useHandoverQuestItemsWindow = this.Config.Bind("Automation", "UseHandoverQuestItemsWindow", true, "Use the HandoverQuestItemsWindow to handover items.");
-            this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
-
-            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Automation", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items. So the HandoverQuestItemsWindow wil pop up again for these quests.");
-            this.resetDeclinedHandoverItemConditionsKeys.SettingChanged += this.global_SettingChanged;
-
             this.autoRestartFailedQuests = this.Config.Bind("Automation", "AutoRestartFailedQuests", true, "Automatically restart failed quests.");
             this.autoRestartFailedQuests.SettingChanged += this.global_SettingChanged;
 
@@ -122,6 +116,12 @@ namespace TaskAutomation
 
             this.thresholdGPCoinHandover = this.Config.Bind("Handover Items", "ThresholdGPCoinHandover", 0.0, "Threshold for the number of times you want to have the GP Coin amount before handing it in.");
             this.thresholdGPCoinHandover.SettingChanged += this.global_SettingChanged;
+
+            this.useHandoverQuestItemsWindow = this.Config.Bind("Handover Items", "UseHandoverQuestItemsWindow", true, "Use the HandoverQuestItemsWindow to handover items.");
+            this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
+
+            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Handover Items", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items. So the HandoverQuestItemsWindow wil pop up again for these quests.");
+            this.resetDeclinedHandoverItemConditionsKeys.SettingChanged += this.global_SettingChanged;
 
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
             this.skipFindInRaid.SettingChanged += this.global_SettingChanged;
