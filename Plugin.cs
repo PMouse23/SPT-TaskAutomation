@@ -4,6 +4,7 @@ using System;
 using TaskAutomation.Helpers;
 using TaskAutomation.Patches.Application;
 using TaskAutomation.Patches.Screens;
+using UnityEngine;
 
 namespace TaskAutomation
 {
@@ -24,6 +25,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> blockTurnInCurrency;
         private ConfigEntry<bool> blockTurnInWeapons;
         private ConfigEntry<bool> debug;
+        private ConfigEntry<KeyboardShortcut> resetDeclinedHandoverItemConditionsKeys;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
         private ConfigEntry<bool> skipFindInRaid;
@@ -93,6 +95,9 @@ namespace TaskAutomation
 
             this.useHandoverQuestItemsWindow = this.Config.Bind("Automation", "UseHandoverQuestItemsWindow", true, "Use the HandoverQuestItemsWindow to handover items.");
             this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
+
+            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Automation", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items. So the HandoverQuestItemsWindow wil pop up again for these quests.");
+            this.resetDeclinedHandoverItemConditionsKeys.SettingChanged += this.global_SettingChanged;
 
             this.autoRestartFailedQuests = this.Config.Bind("Automation", "AutoRestartFailedQuests", true, "Automatically restart failed quests.");
             this.autoRestartFailedQuests.SettingChanged += this.global_SettingChanged;
@@ -185,6 +190,7 @@ namespace TaskAutomation
             Globals.SkipVisitPlace = this.skipVisitPlace.Value;
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
             Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
+            Globals.ResetDeclinedHandoverItemConditionsKeys = this.resetDeclinedHandoverItemConditionsKeys.Value;
         }
 
         private void skipElimination_SettingChanged(object sender, EventArgs e)

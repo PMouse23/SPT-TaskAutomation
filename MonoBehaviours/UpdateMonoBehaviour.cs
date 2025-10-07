@@ -65,6 +65,15 @@ namespace TaskAutomation.MonoBehaviours
                 LogHelper.LogInfo($"StopedAllCoroutines");
         }
 
+        public void Update()
+        {
+            if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
+                return;
+            this.lastConditionHandoverItemId = MongoID.Generate();
+            this.declinedHandoverItemConditions.Clear();
+            LogHelper.LogInfoWithNotification($"Declined HandoverItem reset.");
+        }
+
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
         {
             MongoID id = condition.id;
