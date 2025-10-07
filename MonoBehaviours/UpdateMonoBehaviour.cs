@@ -70,6 +70,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
                 return;
+            if (this.declinedHandoverItemConditions.Count == 0)
+                return;
             this.lastConditionHandoverItemId = MongoID.Generate();
             this.declinedHandoverItemConditions.Clear();
             LogHelper.LogInfoWithNotification($"Declined HandoverItem reset.");
