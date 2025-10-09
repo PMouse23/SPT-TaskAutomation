@@ -337,6 +337,8 @@ namespace TaskAutomation.MonoBehaviours
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
+                        if (this.isBlockedCurrency(result.FirstOrDefault(), (int)handoverValue))
+                            continue;
                         handoverValue = result.Length;
                         if (Globals.Debug)
                             LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
