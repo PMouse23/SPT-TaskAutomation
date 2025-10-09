@@ -1,6 +1,7 @@
 ﻿using EFT;
 using EFT.InventoryLogic;
 using EFT.Quests;
+using EFT.UI;
 using HarmonyLib;
 using SPT.Common.Utils;
 using SPT.SinglePlayer.Utils.InRaid;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using TaskAutomation.Helpers;
+using TMPro;
 using UnityEngine;
 using static EFT.Profile;
 
@@ -21,12 +23,18 @@ namespace TaskAutomation.MonoBehaviours
     internal class UpdateMonoBehaviour : MonoBehaviour
     {
         private const string GPCOINTEMPLATEID = "5d235b4d86f7742e017bc88a";
+        private readonly List<MongoID> declinedHandoverItemConditions = new List<MongoID>();
         private AbstractQuestControllerClass? abstractQuestController;
         private CancellationToken? cancellationToken;
         private CancellationTokenSource? cancellationTokenSource;
         private Type? conditionChecker;
         private Type? dailyQuestType;
         private MethodInfo? itemsProviderMethod;
+        private MongoID lastConditionHandoverItemId = MongoID.Generate();
+        private FieldInfo? openFieldInfo;
+        private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
+
+        private GClass3546? windowContext;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
@@ -37,11 +45,14 @@ namespace TaskAutomation.MonoBehaviours
                 LogHelper.LogInfo($"SetAbstractQuestController and StartedCoroutine");
         }
 
-        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType)
+        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ProfileEndpointFactoryAbstractClass profileEndpointFactory)
         {
             this.conditionChecker = conditionChecker;
             this.itemsProviderMethod = itemsProviderMethod;
             this.dailyQuestType = dailyQuistType;
+            this.profileEndpointFactory = profileEndpointFactory;
+            this.openFieldInfo = typeof(HandoverQuestItemsWindow).GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.NonPublic).FirstOrDefault(fi => fi.Name == "Open");
+            LogHelper.LogInfo($"{this.openFieldInfo}");
             if (Globals.Debug)
                 LogHelper.LogInfo($"SetReflection");
         }
@@ -53,6 +64,17 @@ namespace TaskAutomation.MonoBehaviours
             this.StopAllCoroutines();
             if (Globals.Debug)
                 LogHelper.LogInfo($"StopedAllCoroutines");
+        }
+
+        public void Update()
+        {
+            if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
+                return;
+            if (this.declinedHandoverItemConditions.Count == 0)
+                return;
+            this.lastConditionHandoverItemId = MongoID.Generate();
+            this.declinedHandoverItemConditions.Clear();
+            LogHelper.LogInfoWithNotification($"Declined HandoverItem reset.");
         }
 
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
@@ -111,7 +133,7 @@ namespace TaskAutomation.MonoBehaviours
                             LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
                         try
                         {
-                            restart = this.handleQuest(abstractQuestController, quest);
+                            restart = this.handleQuest(this.abstractQuestController, quest);
                         }
                         catch (Exception exception)
                         {
@@ -252,9 +274,9 @@ namespace TaskAutomation.MonoBehaviours
             return count;
         }
 
-        private Item[] getItemsAllowedToHandover(double handoverValue, Item[] result)
+        private Item[] getItemsAllowedToHandover(double take, Item[] result)
         {
-            return result.Where(item => this.isAllowToHandover(item, handoverValue)).Take((int)handoverValue).ToArray();
+            return result.Where(item => this.isAllowToHandover(item, take)).Take((int)take).ToArray();
         }
 
         private QuestClass? getQuestById(string id)
@@ -273,7 +295,10 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (quest.QuestStatus != EQuestStatus.Started)
                 return false;
-
+            if (this.isHandoverQuestItemsWindowOpen())
+                return false;
+            if (this.lastConditionHandoverItemIsDeclined())
+                this.declinedHandoverItemConditions.Add(this.lastConditionHandoverItemId);
             foreach (Condition condition in quest.NecessaryConditions)
             {
                 if (this.cancellationToken?.IsCancellationRequested == true)
@@ -285,6 +310,13 @@ namespace TaskAutomation.MonoBehaviours
 
                 if (condition is ConditionHandoverItem conditionHandoverItem)
                 {
+                    bool isRecentlyDeclined = this.declinedHandoverItemConditions.Contains(conditionHandoverItem.id);
+                    if (isRecentlyDeclined)
+                    {
+                        if (Globals.Debug)
+                            LogHelper.LogInfo($"ConditionHandoverItem: {conditionHandoverItem.id} recently declined.");
+                        continue;
+                    }
                     if (Globals.SkipFindAndObtain && conditionHandoverItem.onlyFoundInRaid == false)
                     {
                         this.completeCondition(abstractQuestController, quest, condition);
@@ -305,13 +337,20 @@ namespace TaskAutomation.MonoBehaviours
                         Item[]? result = this.itemsProviderMethod?.Invoke(null, new object[] { abstractQuestController.Profile.Inventory, condition }) as Item[];
                         if (result == null || result.Length == 0)
                             continue;
-                        result = this.getItemsAllowedToHandover(handoverValue, result);
-                        if (result.Length == 0)
+                        if (this.isBlockedCurrency(result.FirstOrDefault(), (int)handoverValue))
                             continue;
+                        handoverValue = result.Length;
                         if (Globals.Debug)
                             LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
-                        abstractQuestController.HandoverItem(quest, conditionHandoverItem, result, runNetworkTransaction: true);
-                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+                        if (handoverValue == 0)
+                            continue;
+                        if (this.shouldShowHandoverQuestItemsWindow(quest, conditionHandoverItem, result) == false)
+                        {
+                            result = this.getItemsAllowedToHandover(take: handoverValue, result);
+                            return this.handoverItems(abstractQuestController, handoverValue, result, quest, conditionHandoverItem);
+                        }
+                        result = this.getItemsAllowedToHandover(take: 100, result);
+                        this.showHandoverQuestItemsWindow(abstractQuestController, quest, conditionHandoverItem, result, currentValue, handoverValue);
                         return true;
                     }
                 }
@@ -385,6 +424,15 @@ namespace TaskAutomation.MonoBehaviours
                     LogHelper.LogInfo($"ConditionType: {condition.GetType()} not handled.");
             }
             return false;
+        }
+
+        private bool handoverItems(AbstractQuestControllerClass abstractQuestController, double handoverValue, Item[] items, QuestClass quest, ConditionHandoverItem conditionHandoverItem)
+        {
+            if (items.Length == 0)
+                return false;
+            abstractQuestController.HandoverItem(quest, conditionHandoverItem, items, runNetworkTransaction: true);
+            LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+            return true;
         }
 
         private bool isAllowToHandover(Item item, double handoverValue)
@@ -483,6 +531,16 @@ namespace TaskAutomation.MonoBehaviours
             return armorHolderComponent.MoveAbleArmorSlots.Any(slot => slot.ContainedItem is ArmorPlateItemClass armorPlateItemClass && armorPlateItemClass.Armor.ArmorClass > Globals.BlockTurnInArmorPlateLevelHigherThan);
         }
 
+        private bool isHandoverQuestItemsWindowOpen()
+        {
+            if (this.openFieldInfo == null)
+                return false;
+            HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
+            if (handoverItemsWindow == null)
+                return false;
+            return (bool)this.openFieldInfo.GetValue(handoverItemsWindow);
+        }
+
         private bool isInEquipmentSlot(Item item)
         {
             if (this.isEquipmentSlot(item.CurrentAddress))
@@ -549,6 +607,11 @@ namespace TaskAutomation.MonoBehaviours
             return traderInfo.Unlocked;
         }
 
+        private bool lastConditionHandoverItemIsDeclined()
+        {
+            return this.windowContext != null && this.windowContext.gparam_0 == false;
+        }
+
         private bool shouldAcceptDailyQuists(QuestClass quest)
         {
             if (Globals.AutoAcceptDailyQuests)
@@ -567,6 +630,45 @@ namespace TaskAutomation.MonoBehaviours
             else if (Globals.AutoAcceptQuestsThatCanFail)
                 return true;
             return false;
+        }
+
+        private bool shouldShowHandoverQuestItemsWindow(QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] items)
+        {
+            if (Globals.UseHandoverQuestItemsWindow)
+                return true;
+            if (conditionHandoverItem.onlyFoundInRaid == false)
+                return false;
+            string? checkTemplateId = null;
+            foreach (Item item in items)
+            {
+                string templateId = item.TemplateId;
+                if (checkTemplateId == null)
+                    checkTemplateId = templateId;
+                else if (checkTemplateId != templateId)
+                    return true;
+            }
+            return false;
+        }
+
+        private void showHandoverQuestItemsWindow(AbstractQuestControllerClass abstractQuestController, QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] result, double currentValue, double handoverValue)
+        {
+            string traderId = quest.rawQuestClass.TraderId;
+            TraderClass? trader = this.profileEndpointFactory?.GetTrader(traderId);
+            if (trader == null)
+                return;
+            TraderControllerClass? traderController = trader.TraderController;
+            if (traderController == null)
+                return;
+            HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
+            this.lastConditionHandoverItemId = conditionHandoverItem.id;
+            this.windowContext = handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
+            {
+                this.handoverItems(abstractQuestController, handoverValue, result, quest, conditionHandoverItem);
+            }, canShowCloseButton: true);
+            string text = ((TMP_Text)handoverItemsWindow.Caption).text;
+            text = text.Replace("to trader", $"to {trader.LocalizedName}");
+            text += $" for quests: {quest.rawQuestClass.Name}";
+            ((TMP_Text)handoverItemsWindow.Caption).text = text;
         }
     }
 }

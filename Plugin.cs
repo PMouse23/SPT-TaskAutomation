@@ -4,12 +4,15 @@ using System;
 using TaskAutomation.Helpers;
 using TaskAutomation.Patches.Application;
 using TaskAutomation.Patches.Screens;
+using UnityEngine;
 
 namespace TaskAutomation
 {
-    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", "0.9.0")]
+    [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", VERSION)]
     public class Plugin : BaseUnityPlugin
     {
+        public const string VERSION = "1.0.0";
+
         private ConfigEntry<bool> acceptBTROutOfRaid;
         private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
         private ConfigEntry<bool> autoAcceptDailyQuests;
@@ -24,6 +27,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> blockTurnInCurrency;
         private ConfigEntry<bool> blockTurnInWeapons;
         private ConfigEntry<bool> debug;
+        private ConfigEntry<KeyboardShortcut> resetDeclinedHandoverItemConditionsKeys;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
         private ConfigEntry<bool> skipFindInRaid;
@@ -37,6 +41,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> skipWeaponAssembly;
         private ConfigEntry<double> thresholdCurrencyHandover;
         private ConfigEntry<double> thresholdGPCoinHandover;
+        private ConfigEntry<bool> useHandoverQuestItemsWindow;
 
         private void Awake()
         {
@@ -114,6 +119,12 @@ namespace TaskAutomation
             this.thresholdGPCoinHandover = this.Config.Bind("Handover Items", "ThresholdGPCoinHandover", 0.0, "Threshold for the number of times you want to have the GP Coin amount before handing it in.");
             this.thresholdGPCoinHandover.SettingChanged += this.global_SettingChanged;
 
+            this.useHandoverQuestItemsWindow = this.Config.Bind("Handover Items", "UseHandoverQuestItemsWindow", false, "Always show the HandoverQuestItemsWindow to handover items.");
+            this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
+
+            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Handover Items", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items. So the HandoverQuestItemsWindow will pop up again for these quests.");
+            this.resetDeclinedHandoverItemConditionsKeys.SettingChanged += this.global_SettingChanged;
+
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
             this.skipFindInRaid.SettingChanged += this.global_SettingChanged;
 
@@ -180,6 +191,8 @@ namespace TaskAutomation
             Globals.SkipTraderLoyalty = this.skipTraderLoyalty.Value;
             Globals.SkipVisitPlace = this.skipVisitPlace.Value;
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
+            Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
+            Globals.ResetDeclinedHandoverItemConditionsKeys = this.resetDeclinedHandoverItemConditionsKeys.Value;
         }
 
         private void skipElimination_SettingChanged(object sender, EventArgs e)

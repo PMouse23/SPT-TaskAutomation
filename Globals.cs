@@ -1,4 +1,7 @@
-﻿#nullable enable
+﻿using BepInEx.Configuration;
+using UnityEngine;
+
+#nullable enable
 
 internal static class Globals
 {
@@ -16,6 +19,7 @@ internal static class Globals
     public static bool BlockTurnInCurrency = false;
     public static bool BlockTurnInWeapons = false;
     public static bool Debug = false;
+    public static KeyboardShortcut ResetDeclinedHandoverItemConditionsKeys = new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl);
     public static bool SkipElimination = false;
     public static bool SkipFindAndObtain = false;
     public static bool SkipFindInRaid = false;
@@ -30,4 +34,5 @@ internal static class Globals
     public static bool SkipWeaponAssembly = false;
     public static double ThresholdCurrencyHandover = 1.5;
     public static double ThresholdGPCoinHandover = 0.0;
+    public static bool UseHandoverQuestItemsWindow = false;
 }
