@@ -34,7 +34,7 @@ namespace TaskAutomation.MonoBehaviours
         private FieldInfo? openFieldInfo;
         private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
 
-        private GClass3546? windowContext;
+        private GClass3834? windowContext;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
@@ -130,7 +130,7 @@ namespace TaskAutomation.MonoBehaviours
                             yield break;
                         QuestClass quest = enumerator.Current;
                         if (Globals.Debug)
-                            LogHelper.LogInfo($"Handle {quest.rawQuestClass.Name}");
+                            LogHelper.LogInfo($"Handle {quest.RawQuestClass.Name}");
                         try
                         {
                             restart = this.handleQuest(this.abstractQuestController, quest);
@@ -167,9 +167,9 @@ namespace TaskAutomation.MonoBehaviours
                             if (questToComplete == null)
                                 continue;
                             if (Globals.Debug)
-                                LogHelper.LogInfo($"AvailableForFinish {questToComplete.rawQuestClass.Name}");
+                                LogHelper.LogInfo($"AvailableForFinish {questToComplete.RawQuestClass.Name}");
                             this.abstractQuestController.FinishQuest(questToComplete, true);
-                            LogHelper.LogInfoWithNotification($"Completed: {questToComplete.rawQuestClass.Name}");
+                            LogHelper.LogInfoWithNotification($"Completed: {questToComplete.RawQuestClass.Name}");
                         }
                         catch (Exception exception)
                         {
@@ -199,9 +199,9 @@ namespace TaskAutomation.MonoBehaviours
                                 && this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
                                 continue;
                             if (Globals.Debug)
-                                LogHelper.LogInfo($"AvailableForStart {questToStart.rawQuestClass.Name}, json={Json.Serialize<RawQuestClass>(questToStart.rawQuestClass)}");
+                                LogHelper.LogInfo($"AvailableForStart {questToStart.RawQuestClass.Name}, json={Json.Serialize<RawQuestClass>(questToStart.RawQuestClass)}");
                             this.abstractQuestController.AcceptQuest(questToStart, true);
-                            LogHelper.LogInfoWithNotification($"Accepted: {questToStart.rawQuestClass.Name}");
+                            LogHelper.LogInfoWithNotification($"Accepted: {questToStart.RawQuestClass.Name}");
                         }
                         catch (Exception exception)
                         {
@@ -224,7 +224,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (this.abstractQuestController.IsQuestForCurrentProfile(failedQuest) == false)
                             continue;
                         if (Globals.Debug)
-                            LogHelper.LogInfo($"FailConditional {failedQuest.rawQuestClass.Name}");
+                            LogHelper.LogInfo($"FailConditional {failedQuest.RawQuestClass.Name}");
                         this.abstractQuestController.FailConditional(failedQuest);
                     }
                     catch (Exception exception)
@@ -341,7 +341,7 @@ namespace TaskAutomation.MonoBehaviours
                             continue;
                         handoverValue = result.Length;
                         if (Globals.Debug)
-                            LogHelper.LogInfo($"{quest.rawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
+                            LogHelper.LogInfo($"{quest.RawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
                         if (handoverValue == 0)
                             continue;
                         if (this.shouldShowHandoverQuestItemsWindow(quest, conditionHandoverItem, result) == false)
@@ -365,7 +365,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (weapons == null || weapons.Length == 0)
                             continue;
                         abstractQuestController.HandoverItem(quest, conditionWeaponAssembly, weapons, runNetworkTransaction: true);
-                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.RawQuestClass.Name}");
                     }
                 }
                 else if (condition is ConditionFindItem conditionFindItem)
@@ -431,7 +431,7 @@ namespace TaskAutomation.MonoBehaviours
             if (items.Length == 0)
                 return false;
             abstractQuestController.HandoverItem(quest, conditionHandoverItem, items, runNetworkTransaction: true);
-            LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.rawQuestClass.Name}");
+            LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.RawQuestClass.Name}");
             return true;
         }
 
@@ -584,7 +584,7 @@ namespace TaskAutomation.MonoBehaviours
                 || this.isMarkedAsFailRestartable(quest))
                 && this.shouldAcceptQuestThatCanFail(quest)
                 && this.shouldAcceptDailyQuists(quest)
-                && this.isUnlockedTrader(quest.rawQuestClass.TraderId);
+                && this.isUnlockedTrader(quest.RawQuestClass.TraderId);
         }
 
         private bool isStarted(QuestClass quest)
@@ -609,21 +609,21 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool lastConditionHandoverItemIsDeclined()
         {
-            return this.windowContext != null && this.windowContext.gparam_0 == false;
+            return this.windowContext != null && this.windowContext.Gparam_0 == false;
         }
 
         private bool shouldAcceptDailyQuists(QuestClass quest)
         {
             if (Globals.AutoAcceptDailyQuests)
                 return true;
-            return quest.rawQuestClass.GetType() != this.dailyQuestType;
+            return quest.RawQuestClass.GetType() != this.dailyQuestType;
         }
 
         private bool shouldAcceptQuestThatCanFail(QuestClass quest)
         {
-            if (quest.rawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
+            if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
                 return true;
-            var failconditions = quest.rawQuestClass.Conditions[EQuestStatus.Fail];
+            var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail];
             bool canFail = failconditions.IEnumerable_0.Count() > 0;
             if (canFail == false)
                 return true;
@@ -652,7 +652,7 @@ namespace TaskAutomation.MonoBehaviours
 
         private void showHandoverQuestItemsWindow(AbstractQuestControllerClass abstractQuestController, QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] result, double currentValue, double handoverValue)
         {
-            string traderId = quest.rawQuestClass.TraderId;
+            string traderId = quest.RawQuestClass.TraderId;
             TraderClass? trader = this.profileEndpointFactory?.GetTrader(traderId);
             if (trader == null)
                 return;
@@ -667,7 +667,7 @@ namespace TaskAutomation.MonoBehaviours
             }, canShowCloseButton: true);
             string text = ((TMP_Text)handoverItemsWindow.Caption).text;
             text = text.Replace("to trader", $"to {trader.LocalizedName}");
-            text += $" for quests: {quest.rawQuestClass.Name}";
+            text += $" for quests: {quest.RawQuestClass.Name}";
             ((TMP_Text)handoverItemsWindow.Caption).text = text;
         }
     }
