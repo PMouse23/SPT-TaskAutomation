@@ -80,11 +80,25 @@ namespace TaskAutomation.MonoBehaviours
 
             if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
                 return;
-            if (this.declinedHandoverItemConditions.Count == 0)
+            if (RaidTimeUtil.HasRaidLoaded())
                 return;
+            if (this.lastRun == null)
+                return;
+            if (Globals.Debug)
+                this.investigate();
+
+            this.lastRun = null;
+            this.cancellationTokenSource?.Cancel();
+            this.StopAllCoroutines();
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification("Stopped coroutine");
             this.lastConditionHandoverItemId = MongoID.Generate();
             this.declinedHandoverItemConditions.Clear();
             LogHelper.LogInfoWithNotification($"Declined HandoverItem reset.");
+            if (this.abstractQuestController != null)
+                this.StartCoroutine(this.coroutine());
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification("Started coroutine");
         }
 
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
