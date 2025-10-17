@@ -122,7 +122,7 @@ namespace TaskAutomation
             this.useHandoverQuestItemsWindow = this.Config.Bind("Handover Items", "UseHandoverQuestItemsWindow", false, "Always show the HandoverQuestItemsWindow to handover items.");
             this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
 
-            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Handover Items", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items. So the HandoverQuestItemsWindow will pop up again for these quests.");
+            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Handover Items", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items and restart the couritine. So the HandoverQuestItemsWindow will pop up again for these quests.");
             this.resetDeclinedHandoverItemConditionsKeys.SettingChanged += this.global_SettingChanged;
 
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
