@@ -29,8 +29,10 @@ namespace TaskAutomation.MonoBehaviours
         private CancellationTokenSource? cancellationTokenSource;
         private Type? conditionChecker;
         private Type? dailyQuestType;
+        private bool didInvestigate = false;
         private MethodInfo? itemsProviderMethod;
         private MongoID lastConditionHandoverItemId = MongoID.Generate();
+        private DateTime? lastRun = null;
         private FieldInfo? openFieldInfo;
         private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
 
@@ -68,13 +70,35 @@ namespace TaskAutomation.MonoBehaviours
 
         public void Update()
         {
+            bool shouldInvestigate = Globals.Debug && Globals.InvestigateKeys.IsPressed();
+            if (this.didInvestigate != shouldInvestigate)
+            {
+                this.didInvestigate = shouldInvestigate;
+                if (shouldInvestigate)
+                    this.investigate();
+            }
+
             if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
                 return;
-            if (this.declinedHandoverItemConditions.Count == 0)
+            if (RaidTimeUtil.HasRaidLoaded())
                 return;
+            if (this.lastRun == null)
+                return;
+            if (Globals.Debug)
+                this.investigate();
+
+            this.lastRun = null;
+            this.cancellationTokenSource?.Cancel();
+            this.StopAllCoroutines();
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification("Stopped coroutine");
             this.lastConditionHandoverItemId = MongoID.Generate();
             this.declinedHandoverItemConditions.Clear();
             LogHelper.LogInfoWithNotification($"Declined HandoverItem reset.");
+            if (this.abstractQuestController != null)
+                this.StartCoroutine(this.coroutine());
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification("Started coroutine");
         }
 
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
@@ -102,6 +126,7 @@ namespace TaskAutomation.MonoBehaviours
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Started new run.");
                 yield return new WaitForSeconds(0.5f);
+                this.lastRun = DateTime.Now;
                 if (this.cancellationToken?.IsCancellationRequested == true)
                     yield break;
                 if (this.abstractQuestController == null)
@@ -433,6 +458,20 @@ namespace TaskAutomation.MonoBehaviours
             abstractQuestController.HandoverItem(quest, conditionHandoverItem, items, runNetworkTransaction: true);
             LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.RawQuestClass.Name}");
             return true;
+        }
+
+        private void investigate()
+        {
+            TimeSpan? dtm = DateTime.Now - this.lastRun;
+            LogHelper.LogInfoWithNotification($"Last run: {dtm?.Seconds ?? -1} seconds ago.");
+            if (RaidTimeUtil.HasRaidLoaded())
+                LogHelper.LogErrorWithNotification("Appears to have raid loaded");
+            if (this.abstractQuestController == null)
+                LogHelper.LogErrorWithNotification("No abstractQuestController");
+            if (this.cancellationToken?.IsCancellationRequested == true)
+                LogHelper.LogErrorWithNotification("CancellationRequested");
+
+            LogHelper.LogInfoWithNotification($"QuestController: {this.abstractQuestController?.Quests.Count ?? 0} quests.");
         }
 
         private bool isAllowToHandover(Item item, double handoverValue)
