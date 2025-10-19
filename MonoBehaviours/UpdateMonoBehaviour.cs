@@ -1,4 +1,5 @@
-﻿using EFT;
+﻿using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
 using EFT.Quests;
 using EFT.UI;
@@ -80,7 +81,7 @@ namespace TaskAutomation.MonoBehaviours
 
             if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
                 return;
-            if (RaidTimeUtil.HasRaidLoaded())
+            if (hasRaidLoaded())
                 return;
             if (this.lastRun == null)
                 return;
@@ -99,6 +100,12 @@ namespace TaskAutomation.MonoBehaviours
                 this.StartCoroutine(this.coroutine());
             if (Globals.Debug)
                 LogHelper.LogInfoWithNotification("Started coroutine");
+        }
+
+        private static bool hasRaidLoaded()
+        {
+            return RaidTimeUtil.HasRaidLoaded()
+                && Singleton<AbstractGame>.Instance?.GameType != EGameType.Hideout;
         }
 
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
@@ -133,7 +140,7 @@ namespace TaskAutomation.MonoBehaviours
                     yield break;
                 if (Globals.Debug)
                     LogHelper.LogInfo($"abstractQuestController not null.");
-                if (RaidTimeUtil.HasRaidLoaded())
+                if (hasRaidLoaded())
                 {
                     this.UnsetAbstractQuestController();
                     yield break;
@@ -464,7 +471,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             TimeSpan? dtm = DateTime.Now - this.lastRun;
             LogHelper.LogInfoWithNotification($"Last run: {dtm?.Seconds ?? -1} seconds ago.");
-            if (RaidTimeUtil.HasRaidLoaded())
+            if (hasRaidLoaded())
                 LogHelper.LogErrorWithNotification("Appears to have raid loaded");
             if (this.abstractQuestController == null)
                 LogHelper.LogErrorWithNotification("No abstractQuestController");
