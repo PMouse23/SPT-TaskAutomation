@@ -472,7 +472,10 @@ namespace TaskAutomation.MonoBehaviours
             TimeSpan? dtm = DateTime.Now - this.lastRun;
             LogHelper.LogInfoWithNotification($"TA: Last run: {dtm?.Seconds ?? -1} seconds ago.");
             if (hasRaidLoaded())
-                LogHelper.LogErrorWithNotification("TA: Appears to have raid loaded");
+            {
+                EGameType? gameType = Singleton<AbstractGame>.Instance?.GameType;
+                LogHelper.LogErrorWithNotification($"TA: Appears to have raid loaded of type: {gameType}");
+            }
             if (this.abstractQuestController == null)
                 LogHelper.LogErrorWithNotification("TA: No abstractQuestController");
             if (this.cancellationToken?.IsCancellationRequested == true)
