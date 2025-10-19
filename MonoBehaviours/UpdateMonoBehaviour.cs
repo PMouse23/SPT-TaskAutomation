@@ -470,15 +470,15 @@ namespace TaskAutomation.MonoBehaviours
         private void investigate()
         {
             TimeSpan? dtm = DateTime.Now - this.lastRun;
-            LogHelper.LogInfoWithNotification($"Last run: {dtm?.Seconds ?? -1} seconds ago.");
+            LogHelper.LogInfoWithNotification($"TA: Last run: {dtm?.Seconds ?? -1} seconds ago.");
             if (hasRaidLoaded())
-                LogHelper.LogErrorWithNotification("Appears to have raid loaded");
+                LogHelper.LogErrorWithNotification("TA: Appears to have raid loaded");
             if (this.abstractQuestController == null)
-                LogHelper.LogErrorWithNotification("No abstractQuestController");
+                LogHelper.LogErrorWithNotification("TA: No abstractQuestController");
             if (this.cancellationToken?.IsCancellationRequested == true)
-                LogHelper.LogErrorWithNotification("CancellationRequested");
+                LogHelper.LogErrorWithNotification("TA: CancellationRequested");
 
-            LogHelper.LogInfoWithNotification($"QuestController: {this.abstractQuestController?.Quests.Count ?? 0} quests.");
+            LogHelper.LogInfoWithNotification($"TA: QuestController: {this.abstractQuestController?.Quests.Count ?? 0} quests.");
         }
 
         private bool isAllowToHandover(Item item, double handoverValue)
