@@ -624,7 +624,9 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool isReadyToFinish(QuestClass quest)
         {
-            return quest.QuestStatus == EQuestStatus.AvailableForFinish;
+            string traderId = quest.RawQuestClass.TraderId;
+            return this.isUnlockedTrader(traderId)
+                && quest.QuestStatus == EQuestStatus.AvailableForFinish;
         }
 
         private bool isReadyToStart(QuestClass quest)
