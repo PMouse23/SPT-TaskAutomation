@@ -37,15 +37,15 @@ namespace TaskAutomation.MonoBehaviours
         private FieldInfo? openFieldInfo;
         private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
 
+        private Coroutine? runningCoroutine;
         private GClass3834? windowContext;
 
         public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
         {
-            if (this.abstractQuestController == null)
-                this.StartCoroutine(this.coroutine());
             this.abstractQuestController = abstractQuestController;
             if (Globals.Debug)
-                LogHelper.LogInfo($"SetAbstractQuestController and StartedCoroutine");
+                LogHelper.LogInfo($"SetAbstractQuestController");
+            this.startCoroutine();
         }
 
         public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ProfileEndpointFactoryAbstractClass profileEndpointFactory)
@@ -62,11 +62,8 @@ namespace TaskAutomation.MonoBehaviours
 
         public void UnsetAbstractQuestController()
         {
-            this.cancellationTokenSource?.Cancel();
             this.abstractQuestController = null;
-            this.StopAllCoroutines();
-            if (Globals.Debug)
-                LogHelper.LogInfo($"StopedAllCoroutines");
+            this.stopCoroutine();
         }
 
         public void Update()
@@ -78,7 +75,14 @@ namespace TaskAutomation.MonoBehaviours
                 if (shouldInvestigate)
                     this.investigate();
             }
-
+            if (this.abstractQuestController == null)
+                return;
+            if (hasRaidLoaded())
+            {
+                this.cancellationTokenSource?.Cancel();
+                this.UnsetAbstractQuestController();
+                return;
+            }
             if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
                 return;
             if (hasRaidLoaded())
@@ -90,16 +94,12 @@ namespace TaskAutomation.MonoBehaviours
 
             this.lastRun = null;
             this.cancellationTokenSource?.Cancel();
-            this.StopAllCoroutines();
-            if (Globals.Debug)
-                LogHelper.LogInfoWithNotification("Stopped coroutine");
+            this.stopCoroutine();
+
             this.lastConditionHandoverItemId = MongoID.Generate();
             this.declinedHandoverItemConditions.Clear();
             LogHelper.LogInfoWithNotification($"Declined HandoverItem reset.");
-            if (this.abstractQuestController != null)
-                this.StartCoroutine(this.coroutine());
-            if (Globals.Debug)
-                LogHelper.LogInfoWithNotification("Started coroutine");
+            this.startCoroutine();
         }
 
         private static bool hasRaidLoaded()
@@ -140,11 +140,6 @@ namespace TaskAutomation.MonoBehaviours
                     yield break;
                 if (Globals.Debug)
                     LogHelper.LogInfo($"abstractQuestController not null.");
-                if (hasRaidLoaded())
-                {
-                    this.UnsetAbstractQuestController();
-                    yield break;
-                }
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Not in a raid.");
                 var quests = this.abstractQuestController.Quests;
@@ -720,6 +715,25 @@ namespace TaskAutomation.MonoBehaviours
             text = text.Replace("to trader", $"to {trader.LocalizedName}");
             text += $" for quests: {quest.RawQuestClass.Name}";
             ((TMP_Text)handoverItemsWindow.Caption).text = text;
+        }
+
+        private void startCoroutine()
+        {
+            if (this.runningCoroutine == null)
+            {
+                this.runningCoroutine = this.StartCoroutine(this.coroutine());
+                if (Globals.Debug)
+                    LogHelper.LogInfoWithNotification("Started coroutine");
+            }
+        }
+
+        private void stopCoroutine()
+        {
+            if (this.runningCoroutine != null)
+                this.StopCoroutine(this.runningCoroutine);
+            this.runningCoroutine = null;
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification("Stopped coroutine");
         }
     }
 }
