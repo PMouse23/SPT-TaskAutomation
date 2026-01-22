@@ -11,7 +11,7 @@ namespace TaskAutomation
     [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string VERSION = "1.2.2";
+        public const string VERSION = "1.2.3";
 
         private ConfigEntry<bool> acceptBTROutOfRaid;
         private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
