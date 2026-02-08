@@ -709,7 +709,7 @@ namespace TaskAutomation.MonoBehaviours
             this.lastConditionHandoverItemId = conditionHandoverItem.id;
             this.windowContext = handoverItemsWindow.Show(conditionHandoverItem, currentValue, result, abstractQuestController.Profile, traderController, (items) =>
             {
-                this.handoverItems(abstractQuestController, handoverValue, result, quest, conditionHandoverItem);
+                this.handoverItems(abstractQuestController, handoverValue, items, quest, conditionHandoverItem);
             }, canShowCloseButton: true);
             string text = ((TMP_Text)handoverItemsWindow.Caption).text;
             text = text.Replace("to trader", $"to {trader.LocalizedName}");
