@@ -20,6 +20,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
         private ConfigEntry<bool> autoAcceptScavQuests;
         private ConfigEntry<bool> autoCompleteQuests;
+        private ConfigEntry<bool> autoHandleQuestsThatFailOther;
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
         private ConfigEntry<bool> autoRestartFailedQuests;
@@ -88,6 +89,9 @@ namespace TaskAutomation
 
             this.autoCompleteQuests = this.Config.Bind("Automation", "AutoCompleteQuests", true, "Automatically complete quests.");
             this.autoCompleteQuests.SettingChanged += this.global_SettingChanged;
+
+            this.autoHandleQuestsThatFailOther = this.Config.Bind("Automation", "AutoHandleQuestsThatFailOther", false, "Automatically handle quests that fail other quests.");
+            this.autoHandleQuestsThatFailOther.SettingChanged += this.global_SettingChanged;
 
             this.autoHandoverFindInRaid = this.Config.Bind("Automation", "AutoFindInRaid", true, "Automatically handover find in raid items.");
             this.autoHandoverFindInRaid.SettingChanged += this.global_SettingChanged;
@@ -172,6 +176,7 @@ namespace TaskAutomation
             Globals.AutoAcceptQuestsThatCanFail = this.autoAcceptQuestsThatCanFail.Value;
             Globals.AutoAcceptScavQuests = this.autoAcceptScavQuests.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
+            Globals.AutoHandleQuestsThatFailOther = this.autoHandleQuestsThatFailOther.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
             Globals.AutoRestartFailedQuests = this.autoRestartFailedQuests.Value;
