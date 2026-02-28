@@ -24,6 +24,7 @@ namespace TaskAutomation.MonoBehaviours
     internal class UpdateMonoBehaviour : MonoBehaviour
     {
         private const string GPCOINTEMPLATEID = "5d235b4d86f7742e017bc88a";
+        private const float WAITFORSECONDS = 0.2f;
         private readonly List<MongoID> declinedHandoverItemConditions = new List<MongoID>();
         private AbstractQuestControllerClass? abstractQuestController;
         private CancellationToken? cancellationToken;
@@ -149,7 +150,7 @@ namespace TaskAutomation.MonoBehaviours
             {
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Started new run.");
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(WAITFORSECONDS);
                 this.lastRun = DateTime.Now;
                 if (this.cancellationToken?.IsCancellationRequested == true)
                     yield break;
@@ -186,7 +187,7 @@ namespace TaskAutomation.MonoBehaviours
                         {
                             LogHelper.LogExceptionToConsole(exception);
                         }
-                        yield return new WaitForSeconds(0.5f);
+                        yield return new WaitForSeconds(WAITFORSECONDS);
                         if (restart == false
                             || sameQuestCount > 10)
                         {
@@ -221,7 +222,7 @@ namespace TaskAutomation.MonoBehaviours
                         {
                             LogHelper.LogExceptionToConsole(exception);
                         }
-                        yield return new WaitForSeconds(0.5f);
+                        yield return new WaitForSeconds(WAITFORSECONDS);
                     }
                 }
                 //StartQuests
@@ -251,7 +252,7 @@ namespace TaskAutomation.MonoBehaviours
                         {
                             LogHelper.LogExceptionToConsole(exception);
                         }
-                        yield return new WaitForSeconds(0.5f);
+                        yield return new WaitForSeconds(WAITFORSECONDS);
                     }
                 }
                 if (this.cancellationToken?.IsCancellationRequested == true)
@@ -275,7 +276,7 @@ namespace TaskAutomation.MonoBehaviours
                     {
                         LogHelper.LogExceptionToConsole(exception);
                     }
-                    yield return new WaitForSeconds(0.5f);
+                    yield return new WaitForSeconds(WAITFORSECONDS);
                 }
             }
         }
