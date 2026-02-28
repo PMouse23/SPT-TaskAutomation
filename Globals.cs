@@ -12,6 +12,7 @@ internal static class Globals
     public static bool AutoAcceptQuestsThatCanFail = false;
     public static bool AutoAcceptScavQuests = false;
     public static bool AutoCompleteQuests = true;
+    public static bool AutoHandleQuestsThatFailOther = false;
     public static bool AutoHandoverFindInRaid = true;
     public static bool AutoHandoverObtain = true;
     public static bool AutoRestartFailedQuests = true;
