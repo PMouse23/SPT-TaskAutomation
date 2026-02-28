@@ -695,7 +695,7 @@ namespace TaskAutomation.MonoBehaviours
             if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
                 return true;
             var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail];
-            bool canFail = failconditions.IEnumerable_0.Any();
+            bool canFail = failconditions.IEnumerable_0.Any(condition => condition is not ConditionQuest);
             if (canFail == false)
                 return true;
             else if (Globals.AutoAcceptQuestsThatCanFail)
