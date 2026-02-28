@@ -140,6 +140,8 @@ namespace TaskAutomation.MonoBehaviours
             if (setConditionCurrentValueMethodInfo == null)
                 return;
             setConditionCurrentValueMethodInfo.Invoke(conditionController, new object[] { quest, EQuestStatus.AvailableForFinish, condition, condition.value, true });
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification($"Skipped: {condition.FormattedDescription} for {quest.RawQuestClass.Name}.");
         }
 
         private IEnumerator coroutine()
