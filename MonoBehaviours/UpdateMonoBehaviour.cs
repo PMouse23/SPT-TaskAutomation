@@ -282,8 +282,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            var quests = this.abstractQuestController.Quests;
-            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isReadyToFinish);
+            QuestBookClass quests = this.abstractQuestController.Quests;
+            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(quest => this.isReadyToFinish(quest, quests));
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
 
@@ -291,7 +291,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            var quests = this.abstractQuestController.Quests;
+            QuestBookClass quests = this.abstractQuestController.Quests;
             IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isMarkedAsFailRestartable);
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
@@ -300,7 +300,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            var quests = this.abstractQuestController.Quests;
+            QuestBookClass quests = this.abstractQuestController.Quests;
             IEnumerable<QuestClass> questsReadyToStart = quests.Where(this.isReadyToStart);
             return questsReadyToStart.Select(quest => quest.Id).ToList();
         }
@@ -325,7 +325,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return null;
-            var quests = this.abstractQuestController.Quests;
+            QuestBookClass quests = this.abstractQuestController.Quests;
             return quests.FirstOrDefault(quest => quest.Id == id);
         }
 
@@ -638,11 +638,13 @@ namespace TaskAutomation.MonoBehaviours
             return quests.Any(quest => isQuestThatFailsByQuest(quest, questId));
         }
 
-        private bool isReadyToFinish(QuestClass quest)
+        private bool isReadyToFinish(QuestClass quest, QuestBookClass allQuests)
         {
             string traderId = quest.RawQuestClass.TraderId;
             return this.isUnlockedTrader(traderId)
-                && quest.QuestStatus == EQuestStatus.AvailableForFinish;
+                && quest.QuestStatus == EQuestStatus.AvailableForFinish
+                && (Globals.AutoHandleQuestsThatFailOther
+                || this.isQuestThatFailsOtherTasks(quest, allQuests) == false);
         }
 
         private bool isReadyToStart(QuestClass quest)
