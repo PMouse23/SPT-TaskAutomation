@@ -110,6 +110,8 @@ namespace TaskAutomation.MonoBehaviours
 
         private static bool isQuestThatFailsByQuest(QuestClass quest, string target)
         {
+            if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
+                return false;
             var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail].IEnumerable_0;
             bool canFail = failconditions.Any();
             if (canFail == false)
