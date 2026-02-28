@@ -637,7 +637,7 @@ namespace TaskAutomation.MonoBehaviours
         private bool isQuestThatFailsOtherTasks(QuestClass quest, QuestBookClass? quests)
         {
             string questId = quest.RawQuestClass.Id;
-            return quests.Any(quest => isQuestThatFailsByQuest(quest, questId));
+            return quests?.Any(quest => isQuestThatFailsByQuest(quest, questId)) == true;
         }
 
         private bool isReadyToFinish(QuestClass quest, QuestBookClass allQuests)
