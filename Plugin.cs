@@ -20,6 +20,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
         private ConfigEntry<bool> autoAcceptScavQuests;
         private ConfigEntry<bool> autoCompleteQuests;
+        private ConfigEntry<bool> autoHandleQuestsThatFailOther;
         private ConfigEntry<bool> autoHandoverFindInRaid;
         private ConfigEntry<bool> autoHandoverObtain;
         private ConfigEntry<bool> autoRestartFailedQuests;
@@ -42,6 +43,7 @@ namespace TaskAutomation
         private ConfigEntry<double> thresholdCurrencyHandover;
         private ConfigEntry<double> thresholdGPCoinHandover;
         private ConfigEntry<bool> useHandoverQuestItemsWindow;
+        private ConfigEntry<float> waitForSeconds;
 
         private void Awake()
         {
@@ -64,6 +66,15 @@ namespace TaskAutomation
             new InventoryScreen_Show().Enable();
         }
 
+        private float getWaitForSecondsValue()
+        {
+            if (this.waitForSeconds.Value < 0)
+                return 0f;
+            if (this.waitForSeconds.Value > 0.5f)
+                return 0.5f;
+            return this.waitForSeconds.Value;
+        }
+
         private void global_SettingChanged(object sender, EventArgs e)
         {
             this.setGlobalSettings();
@@ -73,6 +84,9 @@ namespace TaskAutomation
         {
             this.debug = this.Config.Bind("General", "Debug", false, "Debug");
             this.debug.SettingChanged += this.global_SettingChanged;
+
+            this.waitForSeconds = this.Config.Bind("General", "DelayTime", 0.3f, "(expert) delay time between automation actions.");
+            this.waitForSeconds.SettingChanged += this.global_SettingChanged;
 
             this.autoAcceptDailyQuests = this.Config.Bind("Automation", "AutoAcceptDailyQuests", true, "Automatically accept daily quests.");
             this.autoAcceptDailyQuests.SettingChanged += this.global_SettingChanged;
@@ -88,6 +102,9 @@ namespace TaskAutomation
 
             this.autoCompleteQuests = this.Config.Bind("Automation", "AutoCompleteQuests", true, "Automatically complete quests.");
             this.autoCompleteQuests.SettingChanged += this.global_SettingChanged;
+
+            this.autoHandleQuestsThatFailOther = this.Config.Bind("Automation", "AutoHandleQuestsThatFailOther", false, "Automatically handle quests that fail other quests.");
+            this.autoHandleQuestsThatFailOther.SettingChanged += this.global_SettingChanged;
 
             this.autoHandoverFindInRaid = this.Config.Bind("Automation", "AutoFindInRaid", true, "Automatically handover find in raid items.");
             this.autoHandoverFindInRaid.SettingChanged += this.global_SettingChanged;
@@ -172,6 +189,7 @@ namespace TaskAutomation
             Globals.AutoAcceptQuestsThatCanFail = this.autoAcceptQuestsThatCanFail.Value;
             Globals.AutoAcceptScavQuests = this.autoAcceptScavQuests.Value;
             Globals.AutoCompleteQuests = this.autoCompleteQuests.Value;
+            Globals.AutoHandleQuestsThatFailOther = this.autoHandleQuestsThatFailOther.Value;
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
             Globals.AutoRestartFailedQuests = this.autoRestartFailedQuests.Value;
@@ -193,6 +211,7 @@ namespace TaskAutomation
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
             Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
             Globals.ResetDeclinedHandoverItemConditionsKeys = this.resetDeclinedHandoverItemConditionsKeys.Value;
+            Globals.WaitForSeconds = this.getWaitForSecondsValue();
         }
 
         private void skipElimination_SettingChanged(object sender, EventArgs e)

@@ -108,6 +108,23 @@ namespace TaskAutomation.MonoBehaviours
                 && Singleton<AbstractGame>.Instance?.GameType != EGameType.Hideout;
         }
 
+        private static bool isQuestThatFailsByQuest(QuestClass quest, string target)
+        {
+            if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
+                return false;
+            var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail].IEnumerable_0;
+            bool canFail = failconditions.Any();
+            if (canFail == false)
+                return false;
+            foreach (Condition? condition in failconditions)
+            {
+                if (condition is ConditionQuest conditionQuest
+                    && conditionQuest.target == target)
+                    return true;
+            }
+            return false;
+        }
+
         private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
         {
             MongoID id = condition.id;
@@ -122,6 +139,8 @@ namespace TaskAutomation.MonoBehaviours
             if (setConditionCurrentValueMethodInfo == null)
                 return;
             setConditionCurrentValueMethodInfo.Invoke(conditionController, new object[] { quest, EQuestStatus.AvailableForFinish, condition, condition.value, true });
+            if (Globals.Debug)
+                LogHelper.LogInfoWithNotification($"Skipped: {condition.FormattedDescription} for {quest.RawQuestClass.Name}.");
         }
 
         private IEnumerator coroutine()
@@ -132,7 +151,7 @@ namespace TaskAutomation.MonoBehaviours
             {
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Started new run.");
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(Globals.WaitForSeconds);
                 this.lastRun = DateTime.Now;
                 if (this.cancellationToken?.IsCancellationRequested == true)
                     yield break;
@@ -142,42 +161,35 @@ namespace TaskAutomation.MonoBehaviours
                     LogHelper.LogInfo($"abstractQuestController not null.");
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Not in a raid.");
-                var quests = this.abstractQuestController.Quests;
+                var allQuests = this.abstractQuestController.Quests.Where(this.isNotFinished);
                 if (Globals.Debug)
-                    LogHelper.LogInfo($"Handle started quests.");
-                IEnumerable<QuestClass> quistEnumerable = quests.Where(this.isStarted);
-                using (IEnumerator<QuestClass> enumerator = quistEnumerable.GetEnumerator())
                 {
-                    int sameQuestCount = 0;
-                    bool moveNext = enumerator.MoveNext();
-                    while (moveNext)
+                    LogHelper.LogInfo($"Handle started quests {allQuests.Count()}/{this.abstractQuestController.Quests.Count}.");
+                    foreach (EQuestStatus questStatus in Enum.GetValues(typeof(EQuestStatus)))
                     {
-                        bool restart = false;
-                        if (this.cancellationToken?.IsCancellationRequested == true)
-                            yield break;
-                        QuestClass quest = enumerator.Current;
-                        if (Globals.Debug)
-                            LogHelper.LogInfo($"Handle {quest.RawQuestClass.Name}");
-                        try
-                        {
-                            restart = this.handleQuest(this.abstractQuestController, quest);
-                        }
-                        catch (Exception exception)
-                        {
-                            LogHelper.LogExceptionToConsole(exception);
-                        }
-                        yield return new WaitForSeconds(0.5f);
-                        quests = this.abstractQuestController.Quests;
-                        if (restart == false
-                            || sameQuestCount > 10)
-                        {
-                            moveNext = enumerator.MoveNext();
-                            sameQuestCount = 0;
-                        }
-                        else
-                            sameQuestCount++;
+                        LogHelper.LogInfo($" - {questStatus.ToString()} {allQuests.Count(quest => quest.QuestStatus == questStatus)}");
+                        //foreach (var quest in allQuests.Where(quest => quest.QuestStatus == questStatus))
+                        //LogHelper.LogInfo($"  * {quest.RawQuestClass.Name}");
                     }
                 }
+                IEnumerable<QuestClass> startedQuests = allQuests.Where(this.isStarted);
+                foreach (QuestClass startedQuest in startedQuests)
+                {
+                    try
+                    {
+                        if (this.cancellationToken?.IsCancellationRequested == true)
+                            yield break;
+                        if (this.shouldHandleQuest(startedQuest, allQuests))
+                            this.handleQuest(this.abstractQuestController, startedQuest);
+                        else if (Globals.Debug)
+                            LogHelper.LogInfo($"blocked quest {startedQuest.RawQuestClass.Name}.");
+                    }
+                    catch (Exception exception)
+                    {
+                        LogHelper.LogExceptionToConsole(exception);
+                    }
+                }
+                yield return new WaitForSeconds(Globals.WaitForSeconds);
                 //FinishQuests
                 if (Globals.AutoCompleteQuests)
                 {
@@ -202,12 +214,10 @@ namespace TaskAutomation.MonoBehaviours
                         {
                             LogHelper.LogExceptionToConsole(exception);
                         }
-                        yield return new WaitForSeconds(0.5f);
+                        yield return new WaitForSeconds(Globals.WaitForSeconds);
                     }
-                    quests = this.abstractQuestController.Quests;
                 }
                 //StartQuests
-                quests = this.abstractQuestController.Quests;
                 if (Globals.AutoAcceptQuests)
                 {
                     if (Globals.Debug)
@@ -234,16 +244,16 @@ namespace TaskAutomation.MonoBehaviours
                         {
                             LogHelper.LogExceptionToConsole(exception);
                         }
-                        yield return new WaitForSeconds(0.5f);
+                        yield return new WaitForSeconds(Globals.WaitForSeconds);
                     }
-                    quests = this.abstractQuestController.Quests;
                 }
                 if (this.cancellationToken?.IsCancellationRequested == true)
                     yield break;
                 //FailedQuests
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Check for failed quest.");
-                QuestClass failedQuest = quests.FirstOrDefault(this.isMarkedAsFailed);
+                allQuests = this.abstractQuestController.Quests;
+                QuestClass failedQuest = allQuests.FirstOrDefault(this.isMarkedAsFailed);
                 if (failedQuest != null)
                 {
                     try
@@ -258,7 +268,7 @@ namespace TaskAutomation.MonoBehaviours
                     {
                         LogHelper.LogExceptionToConsole(exception);
                     }
-                    yield return new WaitForSeconds(0.5f);
+                    yield return new WaitForSeconds(Globals.WaitForSeconds);
                 }
             }
         }
@@ -267,8 +277,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            var quests = this.abstractQuestController.Quests;
-            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isReadyToFinish);
+            QuestBookClass quests = this.abstractQuestController.Quests;
+            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(quest => this.isReadyToFinish(quest, quests));
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
 
@@ -276,7 +286,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            var quests = this.abstractQuestController.Quests;
+            QuestBookClass quests = this.abstractQuestController.Quests;
             IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isMarkedAsFailRestartable);
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
@@ -285,7 +295,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            var quests = this.abstractQuestController.Quests;
+            QuestBookClass quests = this.abstractQuestController.Quests;
             IEnumerable<QuestClass> questsReadyToStart = quests.Where(this.isReadyToStart);
             return questsReadyToStart.Select(quest => quest.Id).ToList();
         }
@@ -310,7 +320,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return null;
-            var quests = this.abstractQuestController.Quests;
+            QuestBookClass quests = this.abstractQuestController.Quests;
             return quests.FirstOrDefault(quest => quest.Id == id);
         }
 
@@ -603,6 +613,11 @@ namespace TaskAutomation.MonoBehaviours
                 && quest.QuestStatus == EQuestStatus.FailRestartable;
         }
 
+        private bool isNotFinished(QuestClass quest)
+        {
+            return quest.QuestStatus != EQuestStatus.Success;
+        }
+
         private bool isPartOfWeaponOrArmor(Item item)
         {
             if (Globals.Debug)
@@ -617,11 +632,19 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool isReadyToFinish(QuestClass quest)
+        private bool isQuestThatFailsOtherTasks(QuestClass quest, IEnumerable<QuestClass> quests)
+        {
+            string questId = quest.RawQuestClass.Id;
+            return quests?.Any(quest => isQuestThatFailsByQuest(quest, questId)) == true;
+        }
+
+        private bool isReadyToFinish(QuestClass quest, QuestBookClass allQuests)
         {
             string traderId = quest.RawQuestClass.TraderId;
             return this.isUnlockedTrader(traderId)
-                && quest.QuestStatus == EQuestStatus.AvailableForFinish;
+                && quest.QuestStatus == EQuestStatus.AvailableForFinish
+                && (Globals.AutoHandleQuestsThatFailOther
+                || this.isQuestThatFailsOtherTasks(quest, allQuests) == false);
         }
 
         private bool isReadyToStart(QuestClass quest)
@@ -670,12 +693,18 @@ namespace TaskAutomation.MonoBehaviours
             if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
                 return true;
             var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail];
-            bool canFail = failconditions.IEnumerable_0.Count() > 0;
+            bool canFail = failconditions.IEnumerable_0.Any(condition => condition is not ConditionQuest);
             if (canFail == false)
                 return true;
             else if (Globals.AutoAcceptQuestsThatCanFail)
                 return true;
             return false;
+        }
+
+        private bool shouldHandleQuest(QuestClass quest, IEnumerable<QuestClass> allQuests)
+        {
+            return Globals.AutoHandleQuestsThatFailOther
+                || this.isQuestThatFailsOtherTasks(quest, allQuests) == false;
         }
 
         private bool shouldShowHandoverQuestItemsWindow(QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] items)

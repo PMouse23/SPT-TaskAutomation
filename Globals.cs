@@ -12,6 +12,7 @@ internal static class Globals
     public static bool AutoAcceptQuestsThatCanFail = false;
     public static bool AutoAcceptScavQuests = false;
     public static bool AutoCompleteQuests = true;
+    public static bool AutoHandleQuestsThatFailOther = false;
     public static bool AutoHandoverFindInRaid = true;
     public static bool AutoHandoverObtain = true;
     public static bool AutoRestartFailedQuests = true;
@@ -36,4 +37,5 @@ internal static class Globals
     public static double ThresholdCurrencyHandover = 1.5;
     public static double ThresholdGPCoinHandover = 0.0;
     public static bool UseHandoverQuestItemsWindow = false;
+    public static float WaitForSeconds = 0.3f;
 }
