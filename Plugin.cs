@@ -43,6 +43,7 @@ namespace TaskAutomation
         private ConfigEntry<double> thresholdCurrencyHandover;
         private ConfigEntry<double> thresholdGPCoinHandover;
         private ConfigEntry<bool> useHandoverQuestItemsWindow;
+        private ConfigEntry<float> waitForSeconds;
 
         private void Awake()
         {
@@ -74,6 +75,9 @@ namespace TaskAutomation
         {
             this.debug = this.Config.Bind("General", "Debug", false, "Debug");
             this.debug.SettingChanged += this.global_SettingChanged;
+
+            this.waitForSeconds = this.Config.Bind("General", "DelayTime", 0.3f, "(expert) delay time between automation actions.");
+            this.waitForSeconds.SettingChanged += this.global_SettingChanged;
 
             this.autoAcceptDailyQuests = this.Config.Bind("Automation", "AutoAcceptDailyQuests", true, "Automatically accept daily quests.");
             this.autoAcceptDailyQuests.SettingChanged += this.global_SettingChanged;
@@ -198,6 +202,7 @@ namespace TaskAutomation
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
             Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
             Globals.ResetDeclinedHandoverItemConditionsKeys = this.resetDeclinedHandoverItemConditionsKeys.Value;
+            Globals.WaitForSeconds = this.waitForSeconds.Value;
         }
 
         private void skipElimination_SettingChanged(object sender, EventArgs e)
