@@ -66,6 +66,15 @@ namespace TaskAutomation
             new InventoryScreen_Show().Enable();
         }
 
+        private float getWaitForSecondsValue()
+        {
+            if (this.waitForSeconds.Value < 0)
+                return 0f;
+            if (this.waitForSeconds.Value < 0.5f)
+                return 0.5f;
+            return this.waitForSeconds.Value;
+        }
+
         private void global_SettingChanged(object sender, EventArgs e)
         {
             this.setGlobalSettings();
@@ -202,7 +211,7 @@ namespace TaskAutomation
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
             Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
             Globals.ResetDeclinedHandoverItemConditionsKeys = this.resetDeclinedHandoverItemConditionsKeys.Value;
-            Globals.WaitForSeconds = this.waitForSeconds.Value;
+            Globals.WaitForSeconds = this.getWaitForSecondsValue();
         }
 
         private void skipElimination_SettingChanged(object sender, EventArgs e)
