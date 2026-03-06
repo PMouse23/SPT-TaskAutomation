@@ -70,7 +70,7 @@ namespace TaskAutomation
         {
             if (this.waitForSeconds.Value < 0)
                 return 0f;
-            if (this.waitForSeconds.Value < 0.5f)
+            if (this.waitForSeconds.Value > 0.5f)
                 return 0.5f;
             return this.waitForSeconds.Value;
         }
