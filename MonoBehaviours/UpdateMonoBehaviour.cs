@@ -188,6 +188,7 @@ namespace TaskAutomation.MonoBehaviours
                     {
                         LogHelper.LogExceptionToConsole(exception);
                     }
+                    yield return new WaitForSeconds(Globals.WaitForSeconds);
                 }
                 yield return new WaitForSeconds(Globals.WaitForSeconds);
                 //FinishQuests
