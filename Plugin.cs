@@ -28,6 +28,8 @@ namespace TaskAutomation
         private ConfigEntry<bool> blockTurnInCurrency;
         private ConfigEntry<bool> blockTurnInWeapons;
         private ConfigEntry<bool> debug;
+        private ConfigEntry<bool> manuallyRunAutomation;
+        private ConfigEntry<KeyboardShortcut> manuallyRunAutomationKeys;
         private ConfigEntry<KeyboardShortcut> resetDeclinedHandoverItemConditionsKeys;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
@@ -121,6 +123,12 @@ namespace TaskAutomation
             this.autoAcceptScavQuests = this.Config.Bind("Automation", "AutoAcceptScavQuests", false, "Automatically accept scav quests.");
             this.autoAcceptScavQuests.SettingChanged += this.global_SettingChanged;
 
+            this.manuallyRunAutomation = this.Config.Bind("Automation", "ManuallyRunAutomation", false, "Only run the automation manually.");
+            this.manuallyRunAutomation.SettingChanged += this.global_SettingChanged;
+
+            this.manuallyRunAutomationKeys = this.Config.Bind("Automation", "ManuallyRunAutomationKeys", new KeyboardShortcut(KeyCode.T, KeyCode.LeftControl), "Keys to press to manually run the coroutine once.");
+            this.manuallyRunAutomationKeys.SettingChanged += this.global_SettingChanged;
+
             this.blockTurnInArmorPlateLevelHigherThan = this.Config.Bind("Handover Items", "BlockTurnInArmorPlateLevelHigherThan", 3, new ConfigDescription("Block the automatic handover of items that have plates higher then level.", new AcceptableValueRange<int>(0, 6)));
             this.blockTurnInArmorPlateLevelHigherThan.SettingChanged += this.global_SettingChanged;
 
@@ -139,7 +147,7 @@ namespace TaskAutomation
             this.useHandoverQuestItemsWindow = this.Config.Bind("Handover Items", "UseHandoverQuestItemsWindow", false, "Always show the HandoverQuestItemsWindow to handover items.");
             this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
 
-            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Handover Items", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items and restart the couritine. So the HandoverQuestItemsWindow will pop up again for these quests.");
+            this.resetDeclinedHandoverItemConditionsKeys = this.Config.Bind("Handover Items", "ResetDeclinedHandoverItemsKeys", new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl), "Keys to press to reset the (in memory) declined handover items and restart the coroutine. So the HandoverQuestItemsWindow will pop up again for these quests.");
             this.resetDeclinedHandoverItemConditionsKeys.SettingChanged += this.global_SettingChanged;
 
             this.skipFindInRaid = this.Config.Bind("Skipper", "SkipFindInRaid", false, "Skip finding items in raid quest conditions.");
@@ -193,6 +201,8 @@ namespace TaskAutomation
             Globals.AutoHandoverFindInRaid = this.autoHandoverFindInRaid.Value;
             Globals.AutoHandoverObtain = this.autoHandoverObtain.Value;
             Globals.AutoRestartFailedQuests = this.autoRestartFailedQuests.Value;
+            Globals.ManuallyRunAutomation = this.manuallyRunAutomation.Value;
+            Globals.ManuallyRunAutomationKeys = this.manuallyRunAutomationKeys.Value;
             Globals.BlockTurnInArmorPlateLevelHigherThan = this.blockTurnInArmorPlateLevelHigherThan.Value;
             Globals.BlockTurnInCurrency = this.blockTurnInCurrency.Value;
             Globals.BlockTurnInWeapons = this.blockTurnInWeapons.Value;

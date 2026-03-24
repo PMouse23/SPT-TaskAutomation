@@ -45,6 +45,8 @@ namespace TaskAutomation.MonoBehaviours
             this.abstractQuestController = abstractQuestController;
             if (Globals.Debug)
                 LogHelper.LogInfo($"SetAbstractQuestController");
+            if (Globals.ManuallyRunAutomation)
+                return;
             this.startCoroutine();
         }
 
@@ -81,6 +83,12 @@ namespace TaskAutomation.MonoBehaviours
             {
                 this.cancellationTokenSource?.Cancel();
                 this.UnsetAbstractQuestController();
+                return;
+            }
+            if (Globals.ManuallyRunAutomationKeys.IsPressed())
+            {
+                bool showManualMessage = true;
+                this.startCoroutine(showManualMessage);
                 return;
             }
             if (Globals.ResetDeclinedHandoverItemConditionsKeys.IsPressed() == false)
@@ -270,6 +278,11 @@ namespace TaskAutomation.MonoBehaviours
                         LogHelper.LogExceptionToConsole(exception);
                     }
                     yield return new WaitForSeconds(Globals.WaitForSeconds);
+                }
+                if (Globals.ManuallyRunAutomation)
+                {
+                    this.stopCoroutine();
+                    yield break;
                 }
             }
         }
@@ -749,8 +762,16 @@ namespace TaskAutomation.MonoBehaviours
 
         private void startCoroutine()
         {
+            bool showManualMessage = true;
+            this.startCoroutine(showManualMessage);
+        }
+
+        private void startCoroutine(bool showManualMessage)
+        {
             if (this.runningCoroutine == null)
             {
+                if (showManualMessage)
+                    LogHelper.LogInfoWithNotification("Started Task Automation.");
                 this.runningCoroutine = this.StartCoroutine(this.coroutine());
                 if (Globals.Debug)
                     LogHelper.LogInfoWithNotification("Started coroutine");
