@@ -762,7 +762,7 @@ namespace TaskAutomation.MonoBehaviours
 
         private void startCoroutine()
         {
-            bool showManualMessage = true;
+            bool showManualMessage = false;
             this.startCoroutine(showManualMessage);
         }
 
