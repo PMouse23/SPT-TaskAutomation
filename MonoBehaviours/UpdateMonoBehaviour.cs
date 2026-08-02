@@ -2,6 +2,7 @@
 using EFT;
 using EFT.InventoryLogic;
 using EFT.Quests;
+using EFT.Trading;
 using EFT.UI;
 using HarmonyLib;
 using SPT.Common.Utils;
@@ -25,7 +26,7 @@ namespace TaskAutomation.MonoBehaviours
     {
         private const string GPCOINTEMPLATEID = "5d235b4d86f7742e017bc88a";
         private readonly List<MongoID> declinedHandoverItemConditions = new List<MongoID>();
-        private AbstractQuestControllerClass? abstractQuestController;
+        private QuestController? abstractQuestController;
         private CancellationToken? cancellationToken;
         private CancellationTokenSource? cancellationTokenSource;
         private Type? conditionChecker;
@@ -35,12 +36,12 @@ namespace TaskAutomation.MonoBehaviours
         private MongoID lastConditionHandoverItemId = MongoID.Generate();
         private DateTime? lastRun = null;
         private FieldInfo? openFieldInfo;
-        private ProfileEndpointFactoryAbstractClass? profileEndpointFactory;
+        private ClientBackendSession? profileEndpointFactory;
 
         private Coroutine? runningCoroutine;
-        private GClass3834? windowContext;
+        private DialogWindowContext? windowContext;
 
-        public void SetAbstractQuestController(AbstractQuestControllerClass abstractQuestController)
+        public void SetAbstractQuestController(QuestController abstractQuestController)
         {
             this.abstractQuestController = abstractQuestController;
             if (Globals.Debug)
@@ -48,7 +49,7 @@ namespace TaskAutomation.MonoBehaviours
             this.startCoroutine();
         }
 
-        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ProfileEndpointFactoryAbstractClass profileEndpointFactory)
+        public void SetReflection(Type conditionChecker, MethodInfo itemsProviderMethod, Type dailyQuistType, ClientBackendSession profileEndpointFactory)
         {
             this.conditionChecker = conditionChecker;
             this.itemsProviderMethod = itemsProviderMethod;
@@ -108,11 +109,11 @@ namespace TaskAutomation.MonoBehaviours
                 && Singleton<AbstractGame>.Instance?.GameType != EGameType.Hideout;
         }
 
-        private static bool isQuestThatFailsByQuest(QuestClass quest, string target)
+        private static bool isQuestThatFailsByQuest(Quest quest, string target)
         {
-            if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
+            if (quest.Template.Conditions.ContainsKey(EQuestStatus.Fail) == false)
                 return false;
-            var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail].IEnumerable_0;
+            var failconditions = quest.Template.Conditions[EQuestStatus.Fail].List;
             bool canFail = failconditions.Any();
             if (canFail == false)
                 return false;
@@ -125,7 +126,7 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private void completeCondition(AbstractQuestControllerClass abstractQuestController, QuestClass quest, Condition condition)
+        private void completeCondition(QuestController abstractQuestController, Quest quest, Condition condition)
         {
             MongoID id = condition.id;
             if (quest.IsConditionDone(condition))
@@ -140,7 +141,7 @@ namespace TaskAutomation.MonoBehaviours
                 return;
             setConditionCurrentValueMethodInfo.Invoke(conditionController, new object[] { quest, EQuestStatus.AvailableForFinish, condition, condition.value, true });
             if (Globals.Debug)
-                LogHelper.LogInfoWithNotification($"Skipped: {condition.FormattedDescription} for {quest.RawQuestClass.Name}.");
+                LogHelper.LogInfoWithNotification($"Skipped: {condition.FormattedDescription} for {quest.Template.Name}.");
         }
 
         private IEnumerator coroutine()
@@ -169,11 +170,11 @@ namespace TaskAutomation.MonoBehaviours
                     {
                         LogHelper.LogInfo($" - {questStatus.ToString()} {allQuests.Count(quest => quest.QuestStatus == questStatus)}");
                         //foreach (var quest in allQuests.Where(quest => quest.QuestStatus == questStatus))
-                        //LogHelper.LogInfo($"  * {quest.RawQuestClass.Name}");
+                        //LogHelper.LogInfo($"  * {quest.Template.Name}");
                     }
                 }
-                IEnumerable<QuestClass> startedQuests = allQuests.Where(this.isStarted);
-                foreach (QuestClass startedQuest in startedQuests)
+                IEnumerable<Quest> startedQuests = allQuests.Where(this.isStarted);
+                foreach (Quest startedQuest in startedQuests)
                 {
                     try
                     {
@@ -182,7 +183,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (this.shouldHandleQuest(startedQuest, allQuests))
                             this.handleQuest(this.abstractQuestController, startedQuest);
                         else if (Globals.Debug)
-                            LogHelper.LogInfo($"blocked quest {startedQuest.RawQuestClass.Name}.");
+                            LogHelper.LogInfo($"blocked quest {startedQuest.Template.Name}.");
                     }
                     catch (Exception exception)
                     {
@@ -203,13 +204,13 @@ namespace TaskAutomation.MonoBehaviours
                             yield break;
                         try
                         {
-                            QuestClass? questToComplete = this.getQuestById(id);
+                            Quest? questToComplete = this.getQuestById(id);
                             if (questToComplete == null)
                                 continue;
                             if (Globals.Debug)
-                                LogHelper.LogInfo($"AvailableForFinish {questToComplete.RawQuestClass.Name}");
+                                LogHelper.LogInfo($"AvailableForFinish {questToComplete.Template.Name}");
                             this.abstractQuestController.FinishQuest(questToComplete, true);
-                            LogHelper.LogInfoWithNotification($"Completed: {questToComplete.RawQuestClass.Name}");
+                            LogHelper.LogInfoWithNotification($"Completed: {questToComplete.Template.Name}");
                         }
                         catch (Exception exception)
                         {
@@ -230,16 +231,16 @@ namespace TaskAutomation.MonoBehaviours
                             yield break;
                         try
                         {
-                            QuestClass? questToStart = this.getQuestById(id);
+                            Quest? questToStart = this.getQuestById(id);
                             if (questToStart == null)
                                 continue;
                             if (Globals.AutoAcceptScavQuests == false
                                 && this.abstractQuestController.IsQuestForCurrentProfile(questToStart) == false)
                                 continue;
                             if (Globals.Debug)
-                                LogHelper.LogInfo($"AvailableForStart {questToStart.RawQuestClass.Name}, json={Json.Serialize<RawQuestClass>(questToStart.RawQuestClass)}");
+                                LogHelper.LogInfo($"AvailableForStart {questToStart.Template.Name}, json={Json.Serialize<QuestTemplate>(questToStart.Template)}");
                             this.abstractQuestController.AcceptQuest(questToStart, true);
-                            LogHelper.LogInfoWithNotification($"Accepted: {questToStart.RawQuestClass.Name}");
+                            LogHelper.LogInfoWithNotification($"Accepted: {questToStart.Template.Name}");
                         }
                         catch (Exception exception)
                         {
@@ -254,7 +255,7 @@ namespace TaskAutomation.MonoBehaviours
                 if (Globals.Debug)
                     LogHelper.LogInfo($"Check for failed quest.");
                 allQuests = this.abstractQuestController.Quests;
-                QuestClass failedQuest = allQuests.FirstOrDefault(this.isMarkedAsFailed);
+                Quest failedQuest = allQuests.FirstOrDefault(this.isMarkedAsFailed);
                 if (failedQuest != null)
                 {
                     try
@@ -262,7 +263,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (this.abstractQuestController.IsQuestForCurrentProfile(failedQuest) == false)
                             continue;
                         if (Globals.Debug)
-                            LogHelper.LogInfo($"FailConditional {failedQuest.RawQuestClass.Name}");
+                            LogHelper.LogInfo($"FailConditional {failedQuest.Template.Name}");
                         this.abstractQuestController.FailConditional(failedQuest);
                     }
                     catch (Exception exception)
@@ -278,8 +279,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            QuestBookClass quests = this.abstractQuestController.Quests;
-            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(quest => this.isReadyToFinish(quest, quests));
+            QuestBook quests = this.abstractQuestController.Quests;
+            IEnumerable<Quest> questsReadyToFinish = quests.Where(quest => this.isReadyToFinish(quest, quests));
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
 
@@ -287,8 +288,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            QuestBookClass quests = this.abstractQuestController.Quests;
-            IEnumerable<QuestClass> questsReadyToFinish = quests.Where(this.isMarkedAsFailRestartable);
+            QuestBook quests = this.abstractQuestController.Quests;
+            IEnumerable<Quest> questsReadyToFinish = quests.Where(this.isMarkedAsFailRestartable);
             return questsReadyToFinish.Select(quest => quest.Id).ToList();
         }
 
@@ -296,8 +297,8 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (this.abstractQuestController == null)
                 return [];
-            QuestBookClass quests = this.abstractQuestController.Quests;
-            IEnumerable<QuestClass> questsReadyToStart = quests.Where(this.isReadyToStart);
+            QuestBook quests = this.abstractQuestController.Quests;
+            IEnumerable<Quest> questsReadyToStart = quests.Where(this.isReadyToStart);
             return questsReadyToStart.Select(quest => quest.Id).ToList();
         }
 
@@ -317,11 +318,11 @@ namespace TaskAutomation.MonoBehaviours
             return result.Where(item => this.isAllowToHandover(item, take)).Take((int)take).ToArray();
         }
 
-        private QuestClass? getQuestById(string id)
+        private Quest? getQuestById(string id)
         {
             if (this.abstractQuestController == null)
                 return null;
-            QuestBookClass quests = this.abstractQuestController.Quests;
+            QuestBook quests = this.abstractQuestController.Quests;
             return quests.FirstOrDefault(quest => quest.Id == id);
         }
 
@@ -329,7 +330,7 @@ namespace TaskAutomation.MonoBehaviours
         /// Handle quest for automation
         /// </summary>
         /// <returns>True if the sequence should run again.</returns>
-        private bool handleQuest(AbstractQuestControllerClass abstractQuestController, QuestClass quest)
+        private bool handleQuest(QuestController abstractQuestController, Quest quest)
         {
             if (quest.QuestStatus != EQuestStatus.Started)
                 return false;
@@ -379,7 +380,7 @@ namespace TaskAutomation.MonoBehaviours
                             continue;
                         handoverValue = result.Length;
                         if (Globals.Debug)
-                            LogHelper.LogInfo($"{quest.RawQuestClass.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
+                            LogHelper.LogInfo($"{quest.Template.Name} HandoverItem(s): currentValue={currentValue}, expectedValue={expectedValue}, handoverValue={result.Length} done={quest.IsConditionDone(condition)} test={conditionProgressChecker.Test()}");
                         if (handoverValue == 0)
                             continue;
                         if (this.shouldShowHandoverQuestItemsWindow(quest, conditionHandoverItem, result) == false)
@@ -403,7 +404,7 @@ namespace TaskAutomation.MonoBehaviours
                         if (weapons == null || weapons.Length == 0)
                             continue;
                         abstractQuestController.HandoverItem(quest, conditionWeaponAssembly, weapons, runNetworkTransaction: true);
-                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.RawQuestClass.Name}");
+                        LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.Template.Name}");
                     }
                 }
                 else if (condition is ConditionFindItem conditionFindItem)
@@ -415,15 +416,15 @@ namespace TaskAutomation.MonoBehaviours
                 }
                 else if (condition is ConditionCounterCreator conditionCounterCreator)
                 {
-                    if (Globals.SkipElimination && conditionCounterCreator.type == RawQuestClass.EQuestType.Elimination)
+                    if (Globals.SkipElimination && conditionCounterCreator.type == QuestTemplate.EQuestType.Elimination)
                         this.completeCondition(abstractQuestController, quest, condition);
-                    else if (Globals.SkipVisitPlace && conditionCounterCreator.type == RawQuestClass.EQuestType.Exploration)
+                    else if (Globals.SkipVisitPlace && conditionCounterCreator.type == QuestTemplate.EQuestType.Exploration)
                         this.completeCondition(abstractQuestController, quest, condition);
-                    else if (Globals.SkipVisitPlace && conditionCounterCreator.type == RawQuestClass.EQuestType.Discover)
+                    else if (Globals.SkipVisitPlace && conditionCounterCreator.type == QuestTemplate.EQuestType.Discover)
                         this.completeCondition(abstractQuestController, quest, condition);
-                    else if (Globals.SkipSkill && conditionCounterCreator.type == RawQuestClass.EQuestType.Experience)
+                    else if (Globals.SkipSkill && conditionCounterCreator.type == QuestTemplate.EQuestType.Experience)
                         this.completeCondition(abstractQuestController, quest, condition);
-                    else if (Globals.SkipSurviveAndExtract && conditionCounterCreator.type == RawQuestClass.EQuestType.Completion)
+                    else if (Globals.SkipSurviveAndExtract && conditionCounterCreator.type == QuestTemplate.EQuestType.Completion)
                         this.completeCondition(abstractQuestController, quest, condition);
                     else if (Globals.Debug)
                         LogHelper.LogInfo($"ConditionCounterCreator: {conditionCounterCreator.type} not handled.");
@@ -464,12 +465,12 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool handoverItems(AbstractQuestControllerClass abstractQuestController, double handoverValue, Item[] items, QuestClass quest, ConditionHandoverItem conditionHandoverItem)
+        private bool handoverItems(QuestController abstractQuestController, double handoverValue, Item[] items, Quest quest, ConditionHandoverItem conditionHandoverItem)
         {
             if (items.Length == 0)
                 return false;
             abstractQuestController.HandoverItem(quest, conditionHandoverItem, items, runNetworkTransaction: true);
-            LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.RawQuestClass.Name}");
+            LogHelper.LogInfoWithNotification($"HandoverItem(s): {quest.Template.Name}");
             return true;
         }
 
@@ -502,7 +503,7 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool isBlockedCurrency(Item item, int handoverValue)
         {
-            if (item is not MoneyItemClass moneyItemClass)
+            if (item is not Money moneyItemClass)
                 return false;
             else if (Globals.BlockTurnInCurrency)
                 return true;
@@ -583,7 +584,7 @@ namespace TaskAutomation.MonoBehaviours
         {
             if (itemComponent is not ArmorHolderComponent armorHolderComponent)
                 return false;
-            return armorHolderComponent.MoveAbleArmorSlots.Any(slot => slot.ContainedItem is ArmorPlateItemClass armorPlateItemClass && armorPlateItemClass.Armor.ArmorClass > Globals.BlockTurnInArmorPlateLevelHigherThan);
+            return armorHolderComponent.MoveAbleArmorSlots.Any(slot => slot.ContainedItem is ArmorPlate armorPlateItemClass && armorPlateItemClass.Armor.ArmorClass > Globals.BlockTurnInArmorPlateLevelHigherThan);
         }
 
         private bool isHandoverQuestItemsWindowOpen()
@@ -603,18 +604,18 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool isMarkedAsFailed(QuestClass quest)
+        private bool isMarkedAsFailed(Quest quest)
         {
             return quest.QuestStatus == EQuestStatus.MarkedAsFailed;
         }
 
-        private bool isMarkedAsFailRestartable(QuestClass quest)
+        private bool isMarkedAsFailRestartable(Quest quest)
         {
             return Globals.AutoRestartFailedQuests
                 && quest.QuestStatus == EQuestStatus.FailRestartable;
         }
 
-        private bool isNotFinished(QuestClass quest)
+        private bool isNotFinished(Quest quest)
         {
             return quest.QuestStatus != EQuestStatus.Success;
         }
@@ -624,7 +625,7 @@ namespace TaskAutomation.MonoBehaviours
             if (Globals.Debug)
                 LogHelper.LogInfo($"WeaponOrArmor: check {item.LocalizedName()} ");
             if (item.CurrentAddress?.Container is Slot slot
-                && (slot.ParentItem is Weapon || slot.ParentItem is ArmoredEquipmentItemClass))
+                && (slot.ParentItem is Weapon || slot.ParentItem is ArmoredEquipment))
             {
                 if (Globals.Debug)
                     LogHelper.LogInfo($"WeaponOrArmor: {item.Id} SlotParentItemType: {slot.ParentItem.GetType()}");
@@ -633,31 +634,31 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool isQuestThatFailsOtherTasks(QuestClass quest, IEnumerable<QuestClass> quests)
+        private bool isQuestThatFailsOtherTasks(Quest quest, IEnumerable<Quest> quests)
         {
-            string questId = quest.RawQuestClass.Id;
+            string questId = quest.Template.Id;
             return quests?.Any(quest => isQuestThatFailsByQuest(quest, questId)) == true;
         }
 
-        private bool isReadyToFinish(QuestClass quest, QuestBookClass allQuests)
+        private bool isReadyToFinish(Quest quest, QuestBook allQuests)
         {
-            string traderId = quest.RawQuestClass.TraderId;
+            string traderId = quest.Template.TraderId;
             return this.isUnlockedTrader(traderId)
                 && quest.QuestStatus == EQuestStatus.AvailableForFinish
                 && (Globals.AutoHandleQuestsThatFailOther
                 || this.isQuestThatFailsOtherTasks(quest, allQuests) == false);
         }
 
-        private bool isReadyToStart(QuestClass quest)
+        private bool isReadyToStart(Quest quest)
         {
             return (quest.QuestStatus == EQuestStatus.AvailableForStart
                 || this.isMarkedAsFailRestartable(quest))
                 && this.shouldAcceptQuestThatCanFail(quest)
                 && this.shouldAcceptDailyQuists(quest)
-                && this.isUnlockedTrader(quest.RawQuestClass.TraderId);
+                && this.isUnlockedTrader(quest.Template.TraderId);
         }
 
-        private bool isStarted(QuestClass quest)
+        private bool isStarted(Quest quest)
         {
             return quest.QuestStatus == EQuestStatus.Started;
         }
@@ -679,22 +680,22 @@ namespace TaskAutomation.MonoBehaviours
 
         private bool lastConditionHandoverItemIsDeclined()
         {
-            return this.windowContext != null && this.windowContext.Gparam_0 == false;
+            return this.windowContext != null && this.windowContext._result == false;
         }
 
-        private bool shouldAcceptDailyQuists(QuestClass quest)
+        private bool shouldAcceptDailyQuists(Quest quest)
         {
             if (Globals.AutoAcceptDailyQuests)
                 return true;
-            return quest.RawQuestClass.GetType() != this.dailyQuestType;
+            return quest.Template.GetType() != this.dailyQuestType;
         }
 
-        private bool shouldAcceptQuestThatCanFail(QuestClass quest)
+        private bool shouldAcceptQuestThatCanFail(Quest quest)
         {
-            if (quest.RawQuestClass.Conditions.ContainsKey(EQuestStatus.Fail) == false)
+            if (quest.Template.Conditions.ContainsKey(EQuestStatus.Fail) == false)
                 return true;
-            var failconditions = quest.RawQuestClass.Conditions[EQuestStatus.Fail];
-            bool canFail = failconditions.IEnumerable_0.Any(condition => condition is not ConditionQuest);
+            var failconditions = quest.Template.Conditions[EQuestStatus.Fail];
+            bool canFail = failconditions.List.Any(condition => condition is not ConditionQuest);
             if (canFail == false)
                 return true;
             else if (Globals.AutoAcceptQuestsThatCanFail)
@@ -702,13 +703,13 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private bool shouldHandleQuest(QuestClass quest, IEnumerable<QuestClass> allQuests)
+        private bool shouldHandleQuest(Quest quest, IEnumerable<Quest> allQuests)
         {
             return Globals.AutoHandleQuestsThatFailOther
                 || this.isQuestThatFailsOtherTasks(quest, allQuests) == false;
         }
 
-        private bool shouldShowHandoverQuestItemsWindow(QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] items)
+        private bool shouldShowHandoverQuestItemsWindow(Quest quest, ConditionHandoverItem conditionHandoverItem, Item[] items)
         {
             if (Globals.UseHandoverQuestItemsWindow)
                 return true;
@@ -726,13 +727,13 @@ namespace TaskAutomation.MonoBehaviours
             return false;
         }
 
-        private void showHandoverQuestItemsWindow(AbstractQuestControllerClass abstractQuestController, QuestClass quest, ConditionHandoverItem conditionHandoverItem, Item[] result, double currentValue, double handoverValue)
+        private void showHandoverQuestItemsWindow(QuestController abstractQuestController, Quest quest, ConditionHandoverItem conditionHandoverItem, Item[] result, double currentValue, double handoverValue)
         {
-            string traderId = quest.RawQuestClass.TraderId;
-            TraderClass? trader = this.profileEndpointFactory?.GetTrader(traderId);
+            string traderId = quest.Template.TraderId;
+            Trader? trader = this.profileEndpointFactory?._traders.First((Trader trader) => trader.Id == traderId);
             if (trader == null)
                 return;
-            TraderControllerClass? traderController = trader.TraderController;
+            ItemController? traderController = trader.TraderController;
             if (traderController == null)
                 return;
             HandoverQuestItemsWindow handoverItemsWindow = ItemUiContext.Instance.HandoverQuestItemsWindow;
@@ -743,7 +744,7 @@ namespace TaskAutomation.MonoBehaviours
             }, canShowCloseButton: true);
             string text = ((TMP_Text)handoverItemsWindow.Caption).text;
             text = text.Replace("to trader", $"to {trader.LocalizedName}");
-            text += $" for quests: {quest.RawQuestClass.Name}";
+            text += $" for quests: {quest.Template.Name}";
             ((TMP_Text)handoverItemsWindow.Caption).text = text;
         }
 
