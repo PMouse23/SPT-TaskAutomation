@@ -11,14 +11,13 @@ namespace TaskAutomation
     [BepInPlugin("com.KnotScripts.TaskAutomation", "TaskAutomation", VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string VERSION = "1.4.2";
+        public const string VERSION = "1.4.3";
 
         private ConfigEntry<bool> acceptBTROutOfRaid;
         private ConfigEntry<bool> acceptLightKeeperOutOfRaid;
         private ConfigEntry<bool> autoAcceptDailyQuests;
         private ConfigEntry<bool> autoAcceptQuests;
         private ConfigEntry<bool> autoAcceptQuestsThatCanFail;
-        private ConfigEntry<bool> skipDialogueQuests;
         private ConfigEntry<bool> autoAcceptScavQuests;
         private ConfigEntry<bool> autoCompleteQuests;
         private ConfigEntry<bool> autoHandleQuestsThatFailOther;
@@ -31,6 +30,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> debug;
         private ConfigEntry<bool> onlyFromStash;
         private ConfigEntry<KeyboardShortcut> resetDeclinedHandoverItemConditionsKeys;
+        private ConfigEntry<bool> skipDialogueQuests;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
         private ConfigEntry<bool> skipFindInRaid;
