@@ -329,7 +329,8 @@ namespace TaskAutomation.MonoBehaviours
             if (this.abstractQuestController == null)
                 return 0;
             int count = 0;
-            IEnumerable<Item> items = this.abstractQuestController.Profile.Inventory.GetAllItemByTemplate(templateId);
+            Inventory inventory = this.abstractQuestController.Profile.Inventory;
+            IEnumerable<Item> items = inventory.GetAllItemByTemplate(templateId).Where(item => this.isUsableForHandover(inventory, item));
             foreach (Item item in items)
                 count += item.StackObjectsCount;
             return count;
@@ -395,7 +396,9 @@ namespace TaskAutomation.MonoBehaviours
                         double expectedValue = condition.value;
                         if (currentValue < expectedValue)
                             handoverValue = expectedValue - currentValue;
-                        Item[]? result = ConditionalController<Quest>.GetItemsForCondition(abstractQuestController.Profile.Inventory, conditionHandoverItem);
+                        Inventory inventory = abstractQuestController.Profile.Inventory;
+                        Item[]? result = ConditionalController<Quest>.GetItemsForCondition(inventory, conditionHandoverItem)
+                            ?.Where(item => this.isUsableForHandover(inventory, item)).ToArray();
                         if (result == null || result.Length == 0)
                             continue;
                         if (this.isBlockedCurrency(result.FirstOrDefault(), (int)handoverValue))
@@ -422,7 +425,9 @@ namespace TaskAutomation.MonoBehaviours
                     else if (Globals.BlockTurnInWeapons == false)
                     {
                         IEnumerable<Item> playerItems = abstractQuestController.Profile.Inventory.GetPlayerItems(EPlayerItems.NonQuestItemsExceptHideoutStashes);
-                        Item[] weapons = Inventory.GetWeaponAssembly(playerItems, conditionWeaponAssembly).ToArray();
+                        Inventory inventory = abstractQuestController.Profile.Inventory;
+                        Item[] weapons = Inventory.GetWeaponAssembly(playerItems, conditionWeaponAssembly)
+                            .Where(item => this.isUsableForHandover(inventory, item)).ToArray();
                         if (weapons == null || weapons.Length == 0)
                             continue;
                         abstractQuestController.HandoverItem(quest, conditionWeaponAssembly, weapons, runNetworkTransaction: true);
@@ -625,6 +630,26 @@ namespace TaskAutomation.MonoBehaviours
             if (this.isEquipmentSlot(item.CurrentAddress))
                 return true;
             return false;
+        }
+
+        /// <summary>
+        /// The game collects handover candidates from the whole inventory (stash, equipment, quest items and sorting table).
+        /// With OnlyFromStash only items whose root container is the stash, sorting table or a quest item stash are used, so worn gear and
+        /// everything inside it (backpack, vest, pockets, secured container, weapons) is never handed over.
+        /// </summary>
+        private bool isUsableForHandover(Inventory inventory, Item item)
+        {
+            if (Globals.OnlyFromStash == false)
+                return true;
+            // Full parent chain (not GetRootItem, which stops at the first non-merging container like a case).
+            Item root = item.GetAllParentItemsAndSelf().Last();
+            bool isStorage = root == inventory.Stash
+                || root == inventory.SortingTable
+                || root == inventory.QuestStashItems
+                || root == inventory.QuestRaidItems;
+            if (Globals.Debug && isStorage == false)
+                LogHelper.LogInfo($"OnlyFromStash: skip {item.LocalizedName()} ({item.Id}), root {root?.GetType()}");
+            return isStorage;
         }
 
         private bool isMarkedAsFailed(Quest quest)
