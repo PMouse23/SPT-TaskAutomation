@@ -1,0 +1,117 @@
+# Builds TaskAutomation from main and publishes a GitHub release for Plugin.VERSION.
+#
+# Started manually only: Actions > Release > Run workflow (branch: main).
+# Fails if a tag for the current Plugin.VERSION already exists, so bump the version first.
+#
+# The game/SPT DLLs are not in this repo. They are downloaded from the PRIVATE repo PMouse23/private
+# (release LIBRARIES_TAG, asset SPT-Libraries.zip, made with New-SPTLibrariesZip.ps1 in the workspace)
+# using the LIBRARIES_TOKEN secret: a fine-grained token with read-only Contents access to that repo only.
+# Forks don't get this secret, so they can't download the DLLs.
+#
+# Security: never trigger this workflow from pull_request_target/workflow_run, and never upload
+# Libraries\ as an artifact. Artifacts and logs of a public repo are public.
+
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  LIBRARIES_REPO: PMouse23/private
+  LIBRARIES_TAG: spt-4.1.6
+  LIBRARIES_ASSET: SPT-Libraries.zip
+  MOD_NAME: TaskAutomation
+
+jobs:
+  release:
+    if: github.repository == 'PMouse23/SPT-TaskAutomation'
+    runs-on: windows-latest
+    steps:
+      - name: Only release from main
+        if: github.ref != 'refs/heads/main'
+        shell: pwsh
+        run: throw "Releases are only made from main, not from $env:GITHUB_REF."
+
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          $match = Select-String -Path Plugin.cs -Pattern 'const string VERSION = "([^"]+)"'
+          if (-not $match) { throw 'VERSION not found in Plugin.cs' }
+          $version = $match.Matches[0].Groups[1].Value
+          if (git ls-remote --tags origin "refs/tags/$version") { throw "Tag $version already exists. Bump Plugin.VERSION first." }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Download game libraries
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.LIBRARIES_TOKEN }}
+        run: |
+          if (-not $env:GH_TOKEN) { throw 'Secret LIBRARIES_TOKEN is not set.' }
+          gh release download $env:LIBRARIES_TAG -R $env:LIBRARIES_REPO -p $env:LIBRARIES_ASSET -D $env:RUNNER_TEMP
+          if ($LASTEXITCODE -ne 0) { throw 'Downloading the libraries failed.' }
+          Expand-Archive (Join-Path $env:RUNNER_TEMP $env:LIBRARIES_ASSET) -DestinationPath Libraries -Force
+          Remove-Item (Join-Path $env:RUNNER_TEMP $env:LIBRARIES_ASSET)
+
+      - name: Download .NET Framework 4.7.2 reference assemblies
+        shell: pwsh
+        run: |
+          $pkg = Join-Path $env:RUNNER_TEMP 'net472refs.zip'
+          Invoke-WebRequest 'https://www.nuget.org/api/v2/package/Microsoft.NETFramework.ReferenceAssemblies.net472/1.0.3' -OutFile $pkg
+          Expand-Archive $pkg -DestinationPath (Join-Path $env:RUNNER_TEMP 'net472refs')
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        shell: pwsh
+        run: |
+          # TargetFrameworkRootPath (not FrameworkPathOverride) so the netstandard facade the game DLLs need is included.
+          $refs = Join-Path $env:RUNNER_TEMP 'net472refs\build'
+          msbuild "$env:MOD_NAME.csproj" -p:Configuration=Release "-p:PreBuildEvent=" "-p:PostBuildEvent=" "-p:TargetFrameworkRootPath=$refs" -nologo -v:m
+          if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
+
+      - name: Package
+        id: package
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $zip = Join-Path $env:RUNNER_TEMP "$env:MOD_NAME-$version.zip"
+          # Write the entries explicitly so the zip always contains exactly BepInEx\plugins\<Mod>.dll
+          # (stored with '/' as the zip format requires; Windows shows it as BepInEx\plugins\<Mod>.dll).
+          Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::Open($zip, [System.IO.Compression.ZipArchiveMode]::Create)
+          try {
+            [void]$archive.CreateEntry('BepInEx/')
+            [void]$archive.CreateEntry('BepInEx/plugins/')
+            [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Resolve-Path "bin\Release\$env:MOD_NAME.dll").Path, "BepInEx/plugins/$env:MOD_NAME.dll")
+          }
+          finally {
+            $archive.Dispose()
+          }
+          $entries = [System.IO.Compression.ZipFile]::OpenRead($zip).Entries.FullName
+          Write-Host "Release zip contents:`n$($entries -join "`n")"
+          if ($entries -notcontains "BepInEx/plugins/$env:MOD_NAME.dll") { throw 'Release zip has the wrong structure.' }
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+
+      - name: Create release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          gh release create $version '${{ steps.package.outputs.zip }}' --target $env:GITHUB_SHA --title "$env:MOD_NAME $version" --generate-notes
+          if ($LASTEXITCODE -ne 0) { throw 'Creating the release failed.' }
+
+      - name: Remove game libraries
+        if: always()
+        shell: pwsh
+        run: Remove-Item Libraries -Recurse -Force -ErrorAction SilentlyContinue
