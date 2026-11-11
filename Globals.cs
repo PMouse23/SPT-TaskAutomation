@@ -20,6 +20,7 @@ internal static class Globals
     public static bool BlockTurnInCurrency = false;
     public static bool BlockTurnInWeapons = false;
     public static bool Debug = false;
+    public static bool OnlyFromStash = true;
     public static KeyboardShortcut InvestigateKeys = new KeyboardShortcut(KeyCode.I, KeyCode.LeftControl);
     public static KeyboardShortcut ResetDeclinedHandoverItemConditionsKeys = new KeyboardShortcut(KeyCode.R, KeyCode.LeftControl);
     public static bool SkipDialogueQuests = true;

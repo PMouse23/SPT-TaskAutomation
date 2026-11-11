@@ -29,6 +29,7 @@ namespace TaskAutomation
         private ConfigEntry<bool> blockTurnInCurrency;
         private ConfigEntry<bool> blockTurnInWeapons;
         private ConfigEntry<bool> debug;
+        private ConfigEntry<bool> onlyFromStash;
         private ConfigEntry<KeyboardShortcut> resetDeclinedHandoverItemConditionsKeys;
         private ConfigEntry<bool> skipElimination;
         private ConfigEntry<bool> skipFindAndObtain;
@@ -140,6 +141,9 @@ namespace TaskAutomation
             this.thresholdGPCoinHandover = this.Config.Bind("Handover Items", "ThresholdGPCoinHandover", 0.0, "Threshold for the number of times you want to have the GP Coin amount before handing it in.");
             this.thresholdGPCoinHandover.SettingChanged += this.global_SettingChanged;
 
+            this.onlyFromStash = this.Config.Bind("Handover Items", "OnlyFromStash", true, "Only hand over items from your stash (and containers in it). Equipped gear and everything you carry is never used.");
+            this.onlyFromStash.SettingChanged += this.global_SettingChanged;
+
             this.useHandoverQuestItemsWindow = this.Config.Bind("Handover Items", "UseHandoverQuestItemsWindow", false, "Always show the HandoverQuestItemsWindow to handover items.");
             this.useHandoverQuestItemsWindow.SettingChanged += this.global_SettingChanged;
 
@@ -214,6 +218,7 @@ namespace TaskAutomation
             Globals.SkipTraderLoyalty = this.skipTraderLoyalty.Value;
             Globals.SkipVisitPlace = this.skipVisitPlace.Value;
             Globals.SkipWeaponAssembly = this.skipWeaponAssembly.Value;
+            Globals.OnlyFromStash = this.onlyFromStash.Value;
             Globals.UseHandoverQuestItemsWindow = this.useHandoverQuestItemsWindow.Value;
             Globals.ResetDeclinedHandoverItemConditionsKeys = this.resetDeclinedHandoverItemConditionsKeys.Value;
             Globals.WaitForSeconds = this.getWaitForSecondsValue();
